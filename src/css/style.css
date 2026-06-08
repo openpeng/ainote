@@ -1,0 +1,385 @@
+/* ============================================================
+   AINote - Markdown 阅读器样式
+   支持亮色/暗色主题
+   ============================================================ */
+
+/* ---- CSS 变量（主题）---- */
+:root,
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-sidebar: #f6f8fa;
+  --bg-code: #f6f8fa;
+  --text: #1f2328;
+  --text-secondary: #656d76;
+  --border: #d0d7de;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --blockquote-bg: #f6f8fa;
+  --blockquote-border: #d0d7de;
+  --table-stripe: #f6f8fa;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --btn-bg: #f6f8fa;
+  --btn-border: #d0d7de;
+}
+
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --bg-sidebar: #161b22;
+  --bg-code: #161b22;
+  --text: #e6edf3;
+  --text-secondary: #8b949e;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --blockquote-bg: #161b22;
+  --blockquote-border: #30363d;
+  --table-stripe: #161b22;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --btn-bg: #21262d;
+  --btn-border: #30363d;
+}
+
+/* ---- 全局重置 ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ---- 布局 ---- */
+#app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---- 侧边栏（目录）---- */
+#sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 16px;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-header h2 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+#toc {
+  font-size: 0.875rem;
+}
+
+.toc-list {
+  list-style: none;
+}
+
+.toc-list li {
+  margin-bottom: 4px;
+}
+
+.toc-list a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  display: block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.toc-list a:hover {
+  background: var(--border);
+  color: var(--accent);
+}
+
+.toc-empty {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* ---- 主内容区 ---- */
+#content {
+  flex: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 40px;
+}
+
+/* ---- 工具栏 ---- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.file-input-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.file-input-label:hover {
+  background: var(--border);
+}
+
+#themeToggle {
+  margin-left: auto;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* ---- Markdown 正文样式 ---- */
+.markdown-body {
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.markdown-body h1 {
+  font-size: 2rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3em;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.markdown-body h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3em;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.markdown-body h3 { font-size: 1.25rem; margin-top: 24px; margin-bottom: 16px; }
+.markdown-body h4 { font-size: 1rem; margin-top: 24px; margin-bottom: 16px; }
+
+.markdown-body p {
+  margin-bottom: 16px;
+}
+
+.markdown-body a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.markdown-body code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.875em;
+  background: var(--bg-code);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+}
+
+/* ---- 代码块 ---- */
+.markdown-body pre {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* 复制按钮 */
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  color: var(--text);
+}
+
+.markdown-body pre:hover .copy-btn {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  background: var(--border);
+}
+
+/* ---- 引用块 ---- */
+.markdown-body blockquote {
+  background: var(--blockquote-bg);
+  border-left: 4px solid var(--blockquote-border);
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+/* ---- 表格 ---- */
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  text-align: left;
+}
+
+.markdown-body th {
+  background: var(--bg-sidebar);
+  font-weight: 600;
+}
+
+.markdown-body tr:nth-child(even) {
+  background: var(--table-stripe);
+}
+
+/* ---- 列表 ---- */
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 2em;
+  margin-bottom: 16px;
+}
+
+.markdown-body li {
+  margin-bottom: 4px;
+}
+
+.markdown-body li + li {
+  margin-top: 4px;
+}
+
+/* 任务列表 */
+.markdown-body input[type="checkbox"] {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* ---- 分割线 ---- */
+.markdown-body hr {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 24px 0;
+}
+
+/* ---- 图片 ---- */
+.markdown-body img {
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+/* ---- Mermaid 图表容器 ---- */
+.mermaid-svg {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.mermaid-svg svg {
+  max-width: 100%;
+}
+
+.mermaid-error {
+  background: #ffebe9;
+  border: 1px solid #ffc1ba;
+  border-radius: 6px;
+  padding: 12px;
+  color: #82071e;
+  font-size: 0.875rem;
+}
+
+[data-theme="dark"] .mermaid-error {
+  background: #300;
+  border-color: #600;
+  color: #f85149;
+}
+
+/* ---- 脚注 ---- */
+.markdown-body .footnote-ref {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+
+.markdown-body .footnote-backref {
+  text-decoration: none;
+}
+
+/* ---- KaTeX 公式 ---- */
+.markdown-body .katex {
+  font-size: 1.1em;
+}
+
+/* ---- 响应式 ---- */
+@media (max-width: 768px) {
+  #app {
+    flex-direction: column;
+  }
+
+  #sidebar {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #content {
+    padding: 16px;
+  }
+}

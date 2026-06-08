@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AINote - Markdown Reader</title>
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/node_modules/katex/dist/katex.min.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2>📝 AINote</h2>
+      </div>
+      <nav id="toc"></nav>
+    </aside>
+    <main id="content">
+      <div id="toolbar">
+        <label class="file-input-label">
+          📂 打开 Markdown
+          <input type="file" id="fileInput" accept=".md,.markdown,.txt" hidden />
+        </label>
+        <button id="themeToggle" title="切换主题">🌓</button>
+      </div>
+      <article id="markdown-body" class="markdown-body"></article>
+    </main>
+  </div>
+
+  <!-- Mermaid -->
+  <script src="/node_modules/mermaid/dist/mermaid.min.js"></script>
+
+  <!-- Shiki (代码高亮，异步加载) -->
+  <script type="module">
+    import { getHighlighter } from '/node_modules/shiki/dist/index.mjs';
+    window.getShikiHighlighter = getHighlighter;
+  </script>
+
+  <!-- 主入口 -->
+  <script type="module" src="/src/js/main.js"></script>
+</body>
+</html>
