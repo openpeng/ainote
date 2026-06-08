@@ -3,6 +3,8 @@
  * 负责：文件读取、Markdown 渲染、Mermaid 渲染、主题切换、目录生成
  */
 import createParser, { renderMarkdown } from './parser.js';
+import mermaid from 'mermaid';
+import { createHighlighter } from 'shiki';
 
 // ========== 状态 ==========
 let parser = null;
@@ -12,11 +14,7 @@ let currentTheme = 'light';
 // ========== 初始化 Shiki ==========
 async function initShiki() {
   try {
-    // 动态导入 Shiki（ESM 包）
-    const { getHighlighter } = await import(
-      '/node_modules/shiki/dist/index.mjs'
-    );
-    shikiHighlighter = await getHighlighter({
+    shikiHighlighter = await createHighlighter({
       themes: ['github-light', 'github-dark'],
       langs: [
         'javascript', 'typescript', 'python', 'java', 'c', 'cpp',
@@ -46,9 +44,9 @@ async function renderContent(markdownText) {
   container.innerHTML = html;
 
   // 2. 渲染 Mermaid 图表
-  renderMermaid();
+  await renderMermaid();
 
-  // 3. 渲染数学公式（KaTeX 自动处理 class="katex" 的元素）
+  // 3. 渲染数学公式（KaTeX）
   renderMath();
 
   // 4. 生成目录
@@ -61,39 +59,42 @@ async function renderContent(markdownText) {
 }
 
 // ========== Mermaid 渲染 ==========
-function renderMermaid() {
+async function renderMermaid() {
   const mermaidBlocks = document.querySelectorAll('pre.mermaid');
   if (!mermaidBlocks.length) return;
 
-  if (typeof mermaid === 'undefined') {
-    console.warn('[AINote] Mermaid JS 未加载');
+  try {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: currentTheme === 'dark' ? 'dark' : 'default',
+      securityLevel: 'loose',
+    });
+  } catch (e) {
+    console.warn('[AINote] Mermaid 初始化失败:', e);
     return;
   }
 
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: currentTheme === 'dark' ? 'dark' : 'default',
-    securityLevel: 'loose',
-  });
-
-  mermaidBlocks.forEach(async (block, idx) => {
+  for (let idx = 0; idx < mermaidBlocks.length; idx++) {
+    const block = mermaidBlocks[idx];
     const code = block.textContent;
     const id = `mermaid-svg-${idx}`;
     try {
       const { svg } = await mermaid.render(id, code);
-      block.outerHTML = `<div class="mermaid-svg">${svg}</div>`;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mermaid-svg';
+      wrapper.innerHTML = svg;
+      block.parentNode.replaceChild(wrapper, block);
     } catch (e) {
       console.warn('[AINote] Mermaid 渲染失败:', e);
       block.outerHTML = `<pre class="mermaid-error">Mermaid 渲染错误:\n${code}</pre>`;
     }
-  });
+  }
 }
 
-// ========== 数学公式渲染（KaTeX 自动处理）==========
+// ========== 数学公式渲染 ==========
 function renderMath() {
-  // markdown-it-katex 已把公式转为 KaTeX 的 HTML，
-  // KaTeX 会自动渲染页面中的 .katex 元素
-  // 如果没有自动渲染，可以手动调用 renderMathInElement
+  // markdown-it-katex 已把公式转为 KaTeX 的 HTML
+  // 如果需要手动触发，可调用 renderMathInElement
   if (window.renderMathInElement) {
     window.renderMathInElement(document.getElementById('markdown-body'), {
       delimiters: [
@@ -154,7 +155,7 @@ function toggleTheme() {
     currentTheme === 'light' ? '🌓' : '☀️';
   localStorage.setItem('ainote-theme', currentTheme);
 
-  // 重新渲染 Mermaid（切换主题）
+  // 重新渲染（切换 Mermaid 主题）
   const content = document.getElementById('markdown-body');
   if (content.dataset.rawMarkdown) {
     renderContent(content.dataset.rawMarkdown);
@@ -172,9 +173,8 @@ function handleFile(file) {
   reader.readAsText(file, 'UTF-8');
 }
 
-// ========== 示例 Markdown（首次打开无文件时展示）==========
-const DEMO_MARKDOWN = `\
-# 📖 AINote Markdown 阅读器
+// ========== 示例 Markdown ==========
+const DEMO_MARKDOWN = `# 📖 AINote Markdown 阅读器
 
 欢迎使用 **AINote** —— 一款支持丰富插件的 Markdown 阅读器！
 
@@ -187,6 +187,8 @@ const DEMO_MARKDOWN = `\
 - ✅ 目录自动生成
 - ✅ 暗色/亮色主题切换
 - ✅ 代码块一键复制
+
+---
 
 ## 📊 Mermaid 流程图示例
 
@@ -202,11 +204,27 @@ graph TD
     F & G & H --> I[最终展示]
 \`\`\`
 
+## 📈 Mermaid 时序图示例
+
+\`\`\`mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as AINote
+    participant M as markdown-it
+    participant R as 渲染引擎
+    U->>A: 打开 .md 文件
+    A->>M: 解析 Markdown
+    M-->>A: HTML
+    A->>R: 渲染图表/公式/代码
+    R-->>A: 最终页面
+    A->>U: 展示结果
+\`\`\`
+
 ## 🔢 数学公式示例
 
 行内公式：爱因斯坦的质能方程 $E = mc^2$ 是物理学中最著名的公式之一。
 
-块级公式：
+块级公式（热传导方程）：
 
 $$
 \\frac{\\partial f}{\\partial t} = \\alpha \\nabla^2 f
@@ -221,6 +239,16 @@ function hello(name) {
 }
 \`\`\`
 
+\`\`\`python
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a
+        a, b = b, a + b
+
+print(list(fibonacci(10)))
+\`\`\`
+
 ## 📋 任务列表
 
 - [x] 集成 markdown-it 核心插件
@@ -233,7 +261,16 @@ function hello(name) {
 
 这是一个带有脚注的句子[^1]。
 
-[^1]: 这是脚注的内容。
+[^1]: 这是脚注的内容，会显示在页面底部。
+
+## 📑 表格示例
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| Mermaid | ✅ | 流程图、时序图等 |
+| PlantUML | ✅ | UML 类图、时序图 |
+| KaTeX | ✅ | 行内和块级公式 |
+| Shiki | ✅ | VS Code 同款高亮 |
 
 ---
 
