@@ -51,18 +51,46 @@
   // 判断当前页面是否是 .md 文件
   function isMdFile() {
     const url = window.location.href;
-    return url.endsWith('.md') ||
-           url.endsWith('.markdown') ||
-           document.querySelector('pre > code') !== null && // GitHub 原始代码块
-           (url.includes('/raw/') || url.includes('/blob/'));
+    const path = window.location.pathname;
+
+    // 直接以 .md 或 .markdown 结尾
+    if (path.endsWith('.md') || path.endsWith('.markdown')) return true;
+
+    // GitHub/GitLab 的 raw 文件（URL 中包含 .md）
+    if (url.includes('/raw/') && (path.includes('.md') || path.includes('.markdown'))) return true;
+
+    // GitHub/GitLab 的 blob 页面
+    if (url.includes('/blob/')) {
+      // 检测页面是否有 Markdown 特征的 DOM 结构
+      const readme = document.querySelector('article.markdown-body'); // GitHub README
+      if (readme) return true;
+
+      // 检测是否为纯文本展示（可能是 Markdown）
+      const blobContent = document.querySelectorAll('.blob-code-content');
+      if (blobContent.length > 0) return true;
+    }
+
+    return false;
   }
 
   // 获取页面 Markdown 内容
   function getMarkdownContent() {
     // GitHub blob 页面
-    const blobCode = document.querySelector('.blob-code-content');
-    if (blobCode) {
-      return Array.from(blobCode).map(el => el.textContent).join('\n');
+    const blobCodes = document.querySelectorAll('.blob-code-content');
+    if (blobCodes.length > 0) {
+      return Array.from(blobCodes).map(el => el.textContent).join('\n');
+    }
+
+    // GitHub README 页面
+    const readme = document.querySelector('article.markdown-body');
+    if (readme) {
+      return readme.innerText || readme.textContent;
+    }
+
+    // GitLab 页面
+    const glReadme = document.querySelector('.md');
+    if (glReadme) {
+      return glReadme.innerText || glReadme.textContent;
     }
 
     // 原始文本页面（通常是 pre 标签）
