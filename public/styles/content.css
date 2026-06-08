@@ -1,0 +1,193 @@
+/* AINote 内容样式 - 用于浏览器插件渲染 */
+
+/* 渲染容器 */
+#ainote-rendered {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: #24292e;
+  background: #fff;
+  padding: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* 暗色主题 */
+.ainote-theme-dark #ainote-rendered,
+#ainote-rendered.ainote-theme-dark {
+  color: #c9d1d9;
+  background: #0d1117;
+}
+
+/* 标题 */
+#ainote-rendered h1,
+#ainote-rendered h2,
+#ainote-rendered h3,
+#ainote-rendered h4,
+#ainote-rendered h5,
+#ainote-rendered h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+#ainote-rendered h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+#ainote-rendered h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+#ainote-rendered h3 { font-size: 1.25em; }
+#ainote-rendered h4 { font-size: 1em; }
+#ainote-rendered h5 { font-size: 0.875em; }
+#ainote-rendered h6 { font-size: 0.85em; color: #6a737d; }
+
+.ainote-theme-dark #ainote-rendered h1,
+.ainote-theme-dark #ainote-rendered h2 {
+  border-bottom-color: #30363d;
+}
+.ainote-theme-dark #ainote-rendered h6 {
+  color: #8b949e;
+}
+
+/* 段落 */
+#ainote-rendered p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* 链接 */
+#ainote-rendered a {
+  color: #0366d6;
+  text-decoration: none;
+}
+#ainote-rendered a:hover {
+  text-decoration: underline;
+}
+.ainote-theme-dark #ainote-rendered a {
+  color: #58a6ff;
+}
+
+/* 列表 */
+#ainote-rendered ul,
+#ainote-rendered ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-left: 2em;
+}
+#ainote-rendered li {
+  margin-bottom: 4px;
+}
+
+/* 代码块 */
+#ainote-rendered pre {
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+  overflow: auto;
+  margin-bottom: 16px;
+  font-size: 85%;
+  line-height: 1.45;
+}
+.ainote-theme-dark #ainote-rendered pre {
+  background: #161b22;
+}
+
+#ainote-rendered code {
+  background: rgba(27,31,35,0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 85%;
+}
+.ainote-theme-dark #ainote-rendered code {
+  background: rgba(240,246,252,0.15);
+}
+
+#ainote-rendered pre code {
+  background: transparent;
+  padding: 0;
+}
+
+/* 引用块 */
+#ainote-rendered blockquote {
+  margin: 0 0 16px 0;
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: 4px solid #dfe2e5;
+}
+.ainote-theme-dark #ainote-rendered blockquote {
+  color: #8b949e;
+  border-left-color: #30363d;
+}
+
+/* 表格 */
+#ainote-rendered table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 16px;
+  overflow: auto;
+}
+#ainote-rendered th,
+#ainote-rendered td {
+  border: 1px solid #dfe2e5;
+  padding: 6px 13px;
+}
+#ainote-rendered th {
+  background: #f6f8fa;
+  font-weight: 600;
+}
+.ainote-theme-dark #ainote-rendered th,
+.ainote-theme-dark #ainote-rendered td {
+  border-color: #30363d;
+}
+.ainote-theme-dark #ainote-rendered th {
+  background: #161b22;
+}
+
+/* 水平线 */
+#ainote-rendered hr {
+  height: 0.25em;
+  background: #e1e4e8;
+  border: none;
+  margin: 24px 0;
+}
+.ainote-theme-dark #ainote-rendered hr {
+  background: #30363d;
+}
+
+/* 图片 */
+#ainote-rendered img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 任务列表 */
+#ainote-rendered input[type="checkbox"] {
+  margin-right: 0.5em;
+}
+
+/* Mermaid 图表容器 */
+#ainote-rendered .mermaid {
+  text-align: center;
+  margin: 16px 0;
+}
+
+/* 浮动按钮 */
+#ainote-float-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1a73e8;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 999999;
+  border: none;
+}
+#ainote-float-btn:hover {
+  background: #1557b0;
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AINote 设置</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="container">
+    <h2>📝 AINote 设置</h2>
+
+    <div class="setting-item">
+      <label for="auto-render">自动渲染 .md 文件</label>
+      <label class="switch">
+        <input type="checkbox" id="auto-render" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-item">
+      <label for="theme">主题</label>
+      <select id="theme">
+        <option value="light">亮色</option>
+        <option value="dark">暗色</option>
+        <option value="auto">跟随系统</option>
+      </select>
+    </div>
+
+    <div class="setting-item">
+      <label for="font-size">字体大小</label>
+      <input type="range" id="font-size" min="12" max="24" value="16">
+      <span id="font-size-value">16px</span>
+    </div>
+
+    <div class="setting-item">
+      <label for="line-numbers">显示行号</label>
+      <label class="switch">
+        <input type="checkbox" id="line-numbers" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <hr>
+
+    <button id="manual-render" class="btn primary">手动渲染当前页面</button>
+    <button id="reset" class="btn secondary">恢复原始页面</button>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

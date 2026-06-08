@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "AINote Markdown Renderer",
+  "version": "1.0.0",
+  "description": "自动渲染 .md 文件为美观的 HTML 页面，支持 Mermaid 图表、KaTeX 公式、代码高亮",
+  "icons": {
+    "16": "icon16.svg",
+    "48": "icon48.svg",
+    "128": "icon128.svg"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AINote Markdown Renderer"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
