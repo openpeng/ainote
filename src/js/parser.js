@@ -39,12 +39,13 @@ function shikiPlugin(md, highlighter) {
       return defaultFence(tokens, idx, options, env, slf);
     }
 
-    if (highlighter && lang && highlighter.getLanguage(lang)) {
+    const loadedLangs = highlighter.getLoadedLanguages();
+    if (highlighter && loadedLangs.includes(lang)) {
       try {
         const highlighted = highlighter.codeToHtml(code, { lang });
         return `<div class="code-block">${highlighted}</div>`;
       } catch (e) {
-        // fallback
+        // fallback to default
       }
     }
     return defaultFence(tokens, idx, options, env, slf);
