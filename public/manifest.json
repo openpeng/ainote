@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AINote Markdown Renderer",
-  "version": "1.0.0",
-  "description": "自动渲染 .md 文件为美观的 HTML 页面，支持 Mermaid 图表、KaTeX 公式、代码高亮",
+  "version": "1.1.0",
+  "description": "自动渲染 .md 文件为美观的 HTML 页面，支持 Mermaid 图表、KaTeX 公式、代码高亮、导出 PDF、编辑器模式",
   "icons": {
     "16": "icon16.svg",
     "48": "icon48.svg",
@@ -16,6 +16,26 @@
   "host_permissions": [
     "<all_urls>"
   ],
+  "commands": {
+    "render-toggle": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+R"
+      },
+      "description": "渲染/重置 Markdown"
+    },
+    "export-pdf": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D"
+      },
+      "description": "导出 PDF"
+    },
+    "toggle-editor": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E"
+      },
+      "description": "切换编辑器模式"
+    }
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "AINote Markdown Renderer"

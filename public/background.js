@@ -10,7 +10,8 @@ chrome.runtime.onInstalled.addListener((details) => {
       autoRender: true,
       theme: 'light',
       fontSize: 16,
-      lineNumbers: true
+      lineNumbers: true,
+      editorMode: false
     }, () => {
       console.log('默认设置已初始化');
     });
@@ -41,6 +42,30 @@ function createContextMenus() {
       contexts: ['page'],
       documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
     });
+
+    // 分隔线
+    chrome.contextMenus.create({
+      id: 'ainote-sep',
+      type: 'separator',
+      contexts: ['page'],
+      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+    });
+
+    // 导出 PDF
+    chrome.contextMenus.create({
+      id: 'ainote-export-pdf',
+      title: '📄 导出 PDF',
+      contexts: ['page'],
+      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+    });
+
+    // 切换编辑器模式
+    chrome.contextMenus.create({
+      id: 'ainote-toggle-editor',
+      title: '✏️ 切换编辑器模式',
+      contexts: ['page'],
+      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+    });
   });
 }
 
@@ -52,6 +77,10 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     chrome.tabs.sendMessage(tab.id, { action: 'render' });
   } else if (info.menuItemId === 'ainote-reset') {
     chrome.tabs.sendMessage(tab.id, { action: 'reset' });
+  } else if (info.menuItemId === 'ainote-export-pdf') {
+    chrome.tabs.sendMessage(tab.id, { action: 'exportPDF' });
+  } else if (info.menuItemId === 'ainote-toggle-editor') {
+    chrome.tabs.sendMessage(tab.id, { action: 'toggleEditor' });
   }
 });
 
@@ -61,4 +90,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('[AINote Content]', message.data);
   }
   return false;
+});
+
+// 键盘快捷键处理（如果用户在 chrome://extensions/shortcuts 中配置）
+chrome.commands?.onCommand?.addListener((command) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (!tabs[0] || !tabs[0].id) return;
+
+    if (command === 'render-toggle') {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'render' });
+    } else if (command === 'export-pdf') {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'exportPDF' });
+    } else if (command === 'toggle-editor') {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'toggleEditor' });
+    }
+  });
 });

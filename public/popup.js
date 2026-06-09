@@ -3,7 +3,8 @@ const DEFAULT_SETTINGS = {
   autoRender: true,
   theme: 'light',
   fontSize: 16,
-  lineNumbers: true
+  lineNumbers: true,
+  editorMode: false
 };
 
 // 加载配置
@@ -87,6 +88,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // 手动渲染按钮
   document.getElementById('manual-render').addEventListener('click', () => {
     sendMessageToContent({ action: 'render' });
+  });
+
+  // 切换编辑器模式按钮
+  document.getElementById('toggle-editor').addEventListener('click', () => {
+    sendMessageToContent({ action: 'toggleEditor' });
+  });
+
+  // 导出 PDF 按钮
+  document.getElementById('export-pdf').addEventListener('click', () => {
+    sendMessageToContent({ action: 'exportPDF' });
   });
 
   // 恢复原始页面按钮

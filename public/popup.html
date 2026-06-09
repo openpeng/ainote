@@ -24,6 +24,9 @@
         <option value="light">亮色</option>
         <option value="dark">暗色</option>
         <option value="auto">跟随系统</option>
+        <option value="github">GitHub</option>
+        <option value="vuepress">VuePress</option>
+        <option value="gitbook">GitBook</option>
       </select>
     </div>
 
@@ -44,9 +47,15 @@
     <hr>
 
     <button id="manual-render" class="btn primary">手动渲染当前页面</button>
+    <button id="toggle-editor" class="btn secondary">切换编辑器模式</button>
+    <button id="export-pdf" class="btn secondary">导出 PDF</button>
     <button id="reset" class="btn secondary">恢复原始页面</button>
 
     <div class="status" id="status"></div>
+
+    <div class="shortcuts">
+      <small>快捷键：Ctrl+Shift+R 渲染 | Ctrl+Shift+E 编辑器 | Ctrl+Shift+P 导出PDF</small>
+    </div>
   </div>
 
   <script src="popup.js"></script>
