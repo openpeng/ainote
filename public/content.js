@@ -2,6 +2,13 @@
 (function() {
   'use strict';
 
+  // ========== 辅助函数 ==========
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   let originalContent = null;
   let isRendered = false;
   let currentMarkdownText = ''; // 保存当前 Markdown 文本（用于编辑器模式）
@@ -151,9 +158,191 @@
         pre.parentNode.replaceChild(wrapper, pre);
       } catch (err) {
         console.warn('AINote Mermaid 渲染失败:', err);
-        // 保留原始代码块
       }
     }
+  }
+
+  // ========== PlantUML 编码（用于生成图片 URL） ==========
+  // 需要先加载 pako 库（deflate 压缩）
+  async function ensurePako() {
+    if (typeof pako === 'undefined') {
+      await loadScript('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js');
+    }
+  }
+
+  function plantUmlEncode(text) {
+    // PlantUML 编码流程: UTF-8 → Deflate → 自定义 Base64
+    const PLANTUML_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
+    const STANDARD_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+    // 1. 文本转 UTF-8 字节
+    const utf8Bytes = [];
+    const encoder = encodeURIComponent;
+    const decoded = decodeURIComponent(encoder(text));
+    for (let i = 0; i < decoded.length; i++) {
+      const code = decoded.charCodeAt(i);
+      if (code < 128) {
+        utf8Bytes.push(code);
+      } else if (code < 2048) {
+        utf8Bytes.push(192 | (code >> 6), 128 | (code & 63));
+      } else {
+        utf8Bytes.push(224 | (code >> 12), 128 | ((code >> 6) & 63), 128 | (code & 63));
+      }
+    }
+
+    // 2. Deflate 压缩（使用 pako）
+    let compressed;
+    if (typeof pako !== 'undefined') {
+      compressed = pako.deflateRaw(new Uint8Array(utf8Bytes), { level: 9 });
+    } else {
+      // fallback: 不压缩（PlantUML 也支持未压缩的文本，但 URL 会更长）
+      compressed = new Uint8Array(utf8Bytes);
+    }
+
+    // 3. 转成标准 Base64
+    let binary = '';
+    for (let i = 0; i < compressed.length; i++) {
+      binary += String.fromCharCode(compressed[i]);
+    }
+    let standardBase64 = btoa(binary);
+
+    // 4. 转换成 PlantUML 自定义字母表
+    let plantUml = '';
+    for (const c of standardBase64) {
+      if (c === '=') continue;
+      const idx = STANDARD_ALPHABET.indexOf(c);
+      if (idx !== -1) {
+        plantUml += PLANTUML_ALPHABET[idx];
+      }
+    }
+    return plantUml;
+  }
+
+  // ========== 渲染 PlantUML 图表 ==========
+  async function renderPlantUMLBlocks(container) {
+    const plantUmlBlocks = container.querySelectorAll('code.language-plantuml, code.language-uml');
+    if (plantUmlBlocks.length === 0) return;
+
+    // 确保 pako 已加载
+    await ensurePako();
+
+    let index = 0;
+    for (const block of plantUmlBlocks) {
+      const pre = block.closest('pre');
+      if (!pre) continue;
+
+      const code = block.textContent;
+      const encoded = plantUmlEncode(code);
+      const imgUrl = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'plantuml-chart';
+      wrapper.style.cssText = 'text-align: center; margin: 16px 0;';
+
+      const img = document.createElement('img');
+      img.src = imgUrl;
+      img.alt = 'PlantUML Diagram';
+      img.style.cssText = 'max-width: 100%; height: auto; background: white; padding: 16px; border-radius: 8px;';
+      img.onerror = () => {
+        wrapper.innerHTML = `<pre style="background:#f6f8fa;padding:12px;border-radius:6px;overflow:auto;"><code>${escapeHtml(code)}</code></pre>`;
+      };
+
+      wrapper.appendChild(img);
+      pre.parentNode.replaceChild(wrapper, pre);
+      index++;
+    }
+  }
+
+  // ========== 渲染 Graphviz/DOT 图表 ==========
+  async function renderGraphvizBlocks(container) {
+    const dotBlocks = container.querySelectorAll('code.language-dot, code.language-graphviz');
+    if (dotBlocks.length === 0) return;
+
+    // 动态加载 Viz.js
+    if (typeof Viz === 'undefined') {
+      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@3.6.0/viz.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@3.6.0/full.render.min.js');
+    }
+
+    if (typeof Viz === 'undefined') return;
+
+    const viz = new Viz();
+    let index = 0;
+
+    for (const block of dotBlocks) {
+      const pre = block.closest('pre');
+      if (!pre) continue;
+
+      const code = block.textContent;
+
+      try {
+        const svg = await viz.renderSVGElement(code);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'graphviz-chart';
+        wrapper.style.cssText = 'text-align: center; margin: 16px 0;';
+        wrapper.appendChild(svg);
+        pre.parentNode.replaceChild(wrapper, pre);
+      } catch (err) {
+        console.warn('AINote Graphviz 渲染失败:', err);
+      }
+
+      index++;
+    }
+  }
+
+  // ========== 渲染 D2 图表 ==========
+  async function renderD2Blocks(container) {
+    const d2Blocks = container.querySelectorAll('code.language-d2');
+    if (d2Blocks.length === 0) return;
+
+    // D2 使用官方服务器渲染
+    let index = 0;
+    for (const block of d2Blocks) {
+      const pre = block.closest('pre');
+      if (!pre) continue;
+
+      const code = block.textContent;
+
+      try {
+        // 使用 D2 官方 API（需要网络请求）
+        const response = await fetch('https://d2lang.com/api/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: code, format: 'svg' })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const wrapper = document.createElement('div');
+          wrapper.className = 'd2-chart';
+          wrapper.style.cssText = 'text-align: center; margin: 16px 0;';
+          wrapper.innerHTML = result.svg;
+          pre.parentNode.replaceChild(wrapper, pre);
+        } else {
+          // 降级：显示原始代码
+          console.warn('AINote D2 渲染失败: HTTP ' + response.status);
+        }
+      } catch (err) {
+        console.warn('AINote D2 渲染失败:', err);
+        // 降级：显示原始代码（带语法高亮）
+      }
+
+      index++;
+    }
+  }
+
+  // ========== 确保 SVG 正常显示 ==========
+  function fixSvgDisplay(container) {
+    const svgs = container.querySelectorAll('svg');
+    svgs.forEach(svg => {
+      // 确保 SVG 有合适的样式
+      if (!svg.hasAttribute('width') && !svg.style.width) {
+        svg.style.maxWidth = '100%';
+        svg.style.height = 'auto';
+      }
+      // 移除可能影响显示的内联样式
+      svg.removeAttribute('height');
+    });
   }
 
   // ========== 渲染 KaTeX 公式（简化版，避免正则问题） ==========
@@ -370,11 +559,23 @@
       // 渲染 Mermaid 图表
       await renderMermaidBlocks(container);
 
+      // 渲染 PlantUML 图表
+      await renderPlantUMLBlocks(container);
+
+      // 渲染 Graphviz/DOT 图表
+      await renderGraphvizBlocks(container);
+
+      // 渲染 D2 图表
+      await renderD2Blocks(container);
+
       // 渲染 KaTeX 公式
       renderMath(container);
 
       // 代码高亮
       await highlightCodeBlocks(container);
+
+      // 确保 SVG 正常显示
+      fixSvgDisplay(container);
 
       isRendered = true;
       addFloatingButton();
@@ -564,7 +765,7 @@
     renderMarkdown();
   }
 
-  function updatePreview(mdText) {
+  async function updatePreview(mdText) {
     if (typeof markdownit === 'undefined') return;
 
     const previewPanel = document.getElementById('ainote-preview-panel');
@@ -594,10 +795,22 @@
     }
 
     // 渲染 Mermaid
-    renderMermaidBlocks(previewPanel);
+    await renderMermaidBlocks(previewPanel);
+
+    // 渲染 PlantUML
+    await renderPlantUMLBlocks(previewPanel);
+
+    // 渲染 Graphviz/DOT
+    await renderGraphvizBlocks(previewPanel);
+
+    // 渲染 D2
+    await renderD2Blocks(previewPanel);
 
     // 渲染公式
     renderMath(previewPanel);
+
+    // 确保 SVG 正常显示
+    fixSvgDisplay(previewPanel);
   }
 
   // ========== 浮动按钮 ==========
@@ -654,8 +867,8 @@
       toggleEditorMode();
     }
 
-    // Ctrl+Shift+P: 导出 PDF
-    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+    // Ctrl+Shift+D: 导出 PDF
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
       e.preventDefault();
       exportToPDF();
     }

@@ -273,3 +273,108 @@
   border: 1px solid #e7e7e7;
   border-radius: 4px;
 }
+
+/* PlantUML 图表容器 */
+#ainote-rendered .plantuml-chart {
+  text-align: center;
+  margin: 16px 0;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.ainote-theme-dark #ainote-rendered .plantuml-chart {
+  background: #161b22;
+}
+
+#ainote-rendered .plantuml-chart img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Graphviz 图表容器 */
+#ainote-rendered .graphviz-chart {
+  text-align: center;
+  margin: 16px 0;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.ainote-theme-dark #ainote-rendered .graphviz-chart {
+  background: #161b22;
+}
+
+#ainote-rendered .graphviz-chart svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* D2 图表容器 */
+#ainote-rendered .d2-chart {
+  text-align: center;
+  margin: 16px 0;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.ainote-theme-dark #ainote-rendered .d2-chart {
+  background: #161b22;
+}
+
+#ainote-rendered .d2-chart svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 确保直接嵌入的 SVG 正常显示 */
+#ainote-rendered svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 编辑器模式样式 */
+#ainote-editor-wrapper {
+  display: flex;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+#ainote-editor-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+#ainote-preview-panel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  max-height: 80vh;
+  padding: 0 16px;
+  border-left: 1px solid #ddd;
+}
+
+.ainote-theme-dark #ainote-preview-panel {
+  border-left-color: #30363d;
+}
+
+#ainote-editor-textarea {
+  width: 100%;
+  height: 80vh;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.ainote-theme-dark #ainote-editor-textarea {
+  background: #161b22;
+  color: #c9d1d9;
+  border-color: #30363d;
+}
