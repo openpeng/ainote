@@ -46,6 +46,23 @@
 
     <hr>
 
+    <div class="setting-item">
+      <label for="plantuml-server">PlantUML 服务器</label>
+      <select id="plantuml-server">
+        <option value="auto">自动（官方 + 自定义）</option>
+        <option value="official">官方服务器（国际）</option>
+        <option value="custom">自定义服务器</option>
+      </select>
+    </div>
+
+    <div class="setting-item" id="plantuml-custom-wrap" style="display:none;">
+      <label for="plantuml-custom">自定义服务器地址</label>
+      <input type="text" id="plantuml-custom" placeholder="https://your-server/plantuml" style="width:95%;font-size:12px;padding:4px;">
+      <small style="color:#888;">格式：https://域名/plantuml（无需尾部斜杠）</small>
+    </div>
+
+    <hr>
+
     <button id="manual-render" class="btn primary">手动渲染当前页面</button>
     <button id="toggle-editor" class="btn secondary">切换编辑器模式</button>
     <button id="export-pdf" class="btn secondary">导出 PDF</button>

@@ -4,7 +4,9 @@ const DEFAULT_SETTINGS = {
   theme: 'light',
   fontSize: 16,
   lineNumbers: true,
-  editorMode: false
+  editorMode: false,
+  plantUmlServer: 'auto',
+  plantUmlCustomServer: ''
 };
 
 // 加载配置
@@ -15,7 +17,20 @@ function loadSettings() {
     document.getElementById('font-size').value = settings.fontSize;
     document.getElementById('font-size-value').textContent = settings.fontSize + 'px';
     document.getElementById('line-numbers').checked = settings.lineNumbers;
+    document.getElementById('plantuml-server').value = settings.plantUmlServer;
+    document.getElementById('plantuml-custom').value = settings.plantUmlCustomServer || '';
+    toggleCustomServer(settings.plantUmlServer);
   });
+}
+
+// 根据服务器类型显示/隐藏自定义输入框
+function toggleCustomServer(type) {
+  const wrap = document.getElementById('plantuml-custom-wrap');
+  if (type === 'custom') {
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
 }
 
 // 保存配置
@@ -83,6 +98,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // 行号显示
   document.getElementById('line-numbers').addEventListener('change', (e) => {
     saveSetting('lineNumbers', e.target.checked);
+  });
+
+  // PlantUML 服务器选择
+  const plantUmlServerSelect = document.getElementById('plantuml-server');
+  plantUmlServerSelect.addEventListener('change', (e) => {
+    saveSetting('plantUmlServer', e.target.value);
+    toggleCustomServer(e.target.value);
+  });
+
+  // PlantUML 自定义服务器地址
+  document.getElementById('plantuml-custom').addEventListener('change', (e) => {
+    saveSetting('plantUmlCustomServer', e.target.value.trim());
   });
 
   // 手动渲染按钮

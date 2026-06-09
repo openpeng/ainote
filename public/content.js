@@ -17,8 +17,44 @@
     theme: 'light',
     fontSize: 16,
     lineNumbers: true,
-    editorMode: false
+    editorMode: false,
+    // PlantUML 服务器配置（按优先级排列，自动 fallback）
+    plantUmlServer: 'auto', // 'auto' | 'official' | 'custom'
+    plantUmlCustomServer: ''
   };
+
+  // PlantUML 服务器列表（按推荐顺序）
+  const PLANTUML_SERVERS = {
+    official:   'https://www.plantuml.com/plantuml',
+    // 国内镜像（如有可用，用户可自定义填入）
+    mirror_cn:  '', // 预留，用户可在设置中填写
+  };
+
+  // 根据设置获取待尝试的服务器列表
+  function getPlantUmlServerList() {
+    const servers = [];
+    switch (settings.plantUmlServer) {
+      case 'official':
+        servers.push(PLANTUML_SERVERS.official);
+        break;
+      case 'custom':
+        if (settings.plantUmlCustomServer) {
+          servers.push(settings.plantUmlCustomServer.replace(/\/+$/, ''));
+        }
+        servers.push(PLANTUML_SERVERS.official); // custom 失败也 fallback 到官方
+        break;
+      case 'auto':
+      default:
+        // 先试用官方，后续可加入延迟检测自动排序
+        servers.push(PLANTUML_SERVERS.official);
+        if (settings.plantUmlCustomServer) {
+          servers.push(settings.plantUmlCustomServer.replace(/\/+$/, ''));
+        }
+        break;
+    }
+    // 去重
+    return [...new Set(servers)];
+  }
 
   // ========== 配置加载 ==========
   if (typeof chrome !== 'undefined' && chrome.storage) {
@@ -251,99 +287,91 @@
         continue;
       }
 
-      const imgUrl = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+      // 构建待尝试的服务器 URL 列表
+      const serverList = getPlantUmlServerList();
+      const imgUrls = serverList.map(s => `${s}/svg/${encoded}`);
 
       // URL 过长，直接降级显示原始代码，不发起网络请求
-      if (imgUrl.length > 8000) {
-        showPlantUmlFallback(
-          pre, code,
-          `图表过大（URL ${imgUrl.length} 字符），请拆分后重试`
-        );
+      const firstUrl = imgUrls[0] || `https://www.plantuml.com/plantuml/svg/${encoded}`;
+      if (firstUrl.length > 8000) {
+        showPlantUmlFallback(pre, code, `图表过大（URL ${firstUrl.length} 字符），请拆分后重试`);
         continue;
       }
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'plantuml-chart';
-      wrapper.style.cssText = 'text-align: center; margin: 16px 0; padding: 16px; border-radius: 8px;';
-
-      if (settings.theme === 'dark') {
-        wrapper.style.background = '#161b22';
-        wrapper.style.color = '#c9d1d9';
-      } else {
-        wrapper.style.background = '#f6f8fa';
-        wrapper.style.color = '#24292e';
-      }
-
-      const img = document.createElement('img');
-      img.src = imgUrl;
-      img.alt = 'PlantUML Diagram';
-      img.style.cssText = 'max-width: 100%; height: auto;';
-      img.loading = 'lazy';
-      img.crossOrigin = 'anonymous';
-
-      // 超时控制（8 秒）
-      let loaded = false;
-      const timeout = setTimeout(() => {
-        if (!loaded) {
-          console.warn('AINote PlantUML 加载超时:', imgUrl.substring(0, 120) + '...');
-          showPlantUmlFallback(pre, code, '加载超时（8秒），可能是网络问题或 URL 过长');
-        }
-      }, 8000);
-
-      img.onload = () => {
-        loaded = true;
-        clearTimeout(timeout);
-      };
-
-      img.onerror = () => {
-        if (!loaded) {
-          clearTimeout(timeout);
-          showPlantUmlFallback(pre, code, '图片加载失败，可能是网络问题或图表语法错误');
-        }
-      };
-
-      // 如果已经加载完成（缓存），清除超时
-      if (img.complete) {
-        loaded = true;
-        clearTimeout(timeout);
-      }
-
-      wrapper.appendChild(img);
-      pre.parentNode.replaceChild(wrapper, pre);
+      // 多服务器 fallback 加载 PlantUML 图片
+      await loadPlantUmlWithFallback(pre, code, imgUrls);
     }
   }
 
-  // PlantUML 降级显示：展示原始代码 + 语法高亮
-  function showPlantUmlFallback(pre, code, reason) {
+  // 多服务器 fallback：依次尝试，直到成功
+  async function loadPlantUmlWithFallback(pre, code, imgUrls) {
     const wrapper = document.createElement('div');
     wrapper.className = 'plantuml-chart';
-    wrapper.style.cssText = 'text-align: left; margin: 16px 0; padding: 16px; border-radius: 8px;';
+    wrapper.style.cssText = 'text-align: center; margin: 16px 0; padding: 16px; border-radius: 8px;';
 
     if (settings.theme === 'dark') {
       wrapper.style.background = '#161b22';
       wrapper.style.color = '#c9d1d9';
     } else {
-      wrapper.style.background = '#fff8c5';
+      wrapper.style.background = '#f6f8fa';
       wrapper.style.color = '#24292e';
     }
 
-    wrapper.innerHTML = `
-      <div style="font-size:12px;margin-bottom:8px;color:#d73a49;">⚠️ ${escapeHtml(reason)}</div>
-      <pre style="background:#f6f8fa;padding:12px;border-radius:6px;overflow:auto;"><code class="language-plantuml">${escapeHtml(code)}</code></pre>
-      <div style="font-size:12px;margin-top:8px;opacity:0.7;">
-        可访问 <a href="https://www.plantuml.com/plantuml" target="_blank" style="color:#0366d6;">PlantUML 官网</a> 在线预览，或检查图表语法是否正确。
-      </div>
-    `;
+    // 先显示加载提示
+    wrapper.innerHTML = '<div style="font-size:12px;color:#888;">⏳ PlantUML 加载中...</div>';
 
-    // 尝试语法高亮
-    if (typeof hljs !== 'undefined') {
-      const codeEl = wrapper.querySelector('code');
-      if (codeEl) {
-        try { hljs.highlightElement(codeEl); } catch (e) {}
+    // 如果 pre 还在 DOM 中，替换它
+    if (pre && pre.parentNode) {
+      pre.parentNode.replaceChild(wrapper, pre);
+    }
+
+    // 依次尝试每个服务器
+    for (let i = 0; i < imgUrls.length; i++) {
+      const url = imgUrls[i];
+      try {
+        // 用 fetch 探测（带超时），避免 img.onerror 无法区分哪台服务器
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
+        const resp = await fetch(url, {
+          method: 'GET',
+          mode: 'cors',
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) continue;
+
+        const svgText = await resp.text();
+        if (!svgText || !svgText.includes('<svg')) continue;
+
+        // 成功，渲染 SVG
+        wrapper.innerHTML = svgText;
+        const svgEl = wrapper.querySelector('svg');
+        if (svgEl) {
+          svgEl.style.maxWidth = '100%';
+          svgEl.style.height = 'auto';
+        }
+        return; // 成功，退出
+      } catch (e) {
+        console.warn(`AINote PlantUML 服务器 ${url} 失败:`, e.message);
+        // 尝试下一个服务器
       }
     }
 
-    pre.parentNode.replaceChild(wrapper, pre);
+    // 所有服务器都失败，显示降级内容
+    wrapper.innerHTML = `
+      <div style="font-size:12px;margin-bottom:8px;color:#d73a49;">⚠️ 所有 PlantUML 服务器均不可达</div>
+      <pre style="background:#fff8c5;padding:12px;border-radius:6px;overflow:auto;"><code class="language-plantuml">${escapeHtml(code)}</code></pre>
+      <div style="font-size:12px;margin-top:8px;opacity:0.7;">
+        可访问 <a href="https://www.plantuml.com/plantuml" target="_blank" style="color:#0366d6;">PlantUML 官网</a> 在线预览，或检查图表语法。
+      </div>
+    `;
+    // 尝试语法高亮
+    if (typeof hljs !== 'undefined') {
+      const codeEl = wrapper.querySelector('code');
+      if (codeEl) { try { hljs.highlightElement(codeEl); } catch (e) {} }
+    }
   }
 
   // ========== 渲染 Graphviz/DOT 图表 ==========
