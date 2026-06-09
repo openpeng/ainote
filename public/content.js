@@ -163,50 +163,52 @@
   }
 
   // ========== PlantUML 编码（用于生成图片 URL） ==========
-  // 需要先加载 pako 库（deflate 压缩）
+  // 确保 pako 库只加载一次
+  let pakoLoadPromise = null;
   async function ensurePako() {
-    if (typeof pako === 'undefined') {
-      await loadScript('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js');
-    }
+    if (typeof pako !== 'undefined') return;
+    if (pakoLoadPromise) return pakoLoadPromise;
+    pakoLoadPromise = loadScript('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js');
+    return pakoLoadPromise;
   }
 
-  function plantUmlEncode(text) {
-    // PlantUML 编码流程: UTF-8 → Deflate → 自定义 Base64
-    const PLANTUML_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
-    const STANDARD_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-    // 1. 文本转 UTF-8 字节
-    const utf8Bytes = [];
-    const encoder = encodeURIComponent;
-    const decoded = decodeURIComponent(encoder(text));
-    for (let i = 0; i < decoded.length; i++) {
-      const code = decoded.charCodeAt(i);
-      if (code < 128) {
-        utf8Bytes.push(code);
-      } else if (code < 2048) {
-        utf8Bytes.push(192 | (code >> 6), 128 | (code & 63));
-      } else {
-        utf8Bytes.push(224 | (code >> 12), 128 | ((code >> 6) & 63), 128 | (code & 63));
-      }
+  // Uint8Array 转标准 Base64（安全的分块方式，避免栈溢出）
+  function uint8ToBase64(bytes) {
+    let binary = '';
+    const chunk = 8192;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      const slice = bytes.subarray(i, Math.min(i + chunk, bytes.length));
+      binary += String.fromCharCode.apply(null, slice);
     }
+    return btoa(binary);
+  }
 
-    // 2. Deflate 压缩（使用 pako）
+  // 标准 Base64 字符 → PlantUML 自定义字母表
+  const PLANTUML_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
+  const STANDARD_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+  async function plantUmlEncode(text) {
+    // 1. UTF-8 编码（使用浏览器原生 TextEncoder，正确处理所有 Unicode 字符）
+    const utf8Bytes = new TextEncoder().encode(text);
+
+    // 2. Deflate 压缩（优先使用 pako，失败则使用未压缩原文）
     let compressed;
     if (typeof pako !== 'undefined') {
-      compressed = pako.deflateRaw(new Uint8Array(utf8Bytes), { level: 9 });
+      try {
+        compressed = pako.deflateRaw(utf8Bytes, { level: 9 });
+      } catch (e) {
+        console.warn('AINote PlantUML deflate 失败，使用未压缩文本:', e);
+        compressed = utf8Bytes;
+      }
     } else {
-      // fallback: 不压缩（PlantUML 也支持未压缩的文本，但 URL 会更长）
-      compressed = new Uint8Array(utf8Bytes);
+      // pako 未加载，使用未压缩原文（PlantUML 服务器也支持）
+      compressed = utf8Bytes;
     }
 
     // 3. 转成标准 Base64
-    let binary = '';
-    for (let i = 0; i < compressed.length; i++) {
-      binary += String.fromCharCode(compressed[i]);
-    }
-    let standardBase64 = btoa(binary);
+    const standardBase64 = uint8ToBase64(compressed);
 
-    // 4. 转换成 PlantUML 自定义字母表
+    // 4. 映射到 PlantUML 自定义字母表（跳过 = 填充符）
     let plantUml = '';
     for (const c of standardBase64) {
       if (c === '=') continue;
@@ -215,6 +217,16 @@
         plantUml += PLANTUML_ALPHABET[idx];
       }
     }
+
+    // 5. URL 长度检查（PlantUML 服务器建议不超过 ~8000 字符）
+    const fullUrl = `https://www.plantuml.com/plantuml/svg/${plantUml}`;
+    if (fullUrl.length > 8000) {
+      console.warn(
+        `AINote PlantUML: URL 长度 ${fullUrl.length} 超过建议值 8000，` +
+        '图表可能显示失败。建议拆分较大的 PlantUML 图。'
+      );
+    }
+
     return plantUml;
   }
 
@@ -223,34 +235,115 @@
     const plantUmlBlocks = container.querySelectorAll('code.language-plantuml, code.language-uml');
     if (plantUmlBlocks.length === 0) return;
 
-    // 确保 pako 已加载
     await ensurePako();
 
-    let index = 0;
     for (const block of plantUmlBlocks) {
       const pre = block.closest('pre');
       if (!pre) continue;
 
       const code = block.textContent;
-      const encoded = plantUmlEncode(code);
+      let encoded;
+      try {
+        encoded = plantUmlEncode(code);
+      } catch (e) {
+        console.warn('AINote PlantUML 编码失败:', e);
+        showPlantUmlFallback(pre, code, '编码失败: ' + e.message);
+        continue;
+      }
+
       const imgUrl = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+
+      // URL 过长，直接降级显示原始代码，不发起网络请求
+      if (imgUrl.length > 8000) {
+        showPlantUmlFallback(
+          pre, code,
+          `图表过大（URL ${imgUrl.length} 字符），请拆分后重试`
+        );
+        continue;
+      }
 
       const wrapper = document.createElement('div');
       wrapper.className = 'plantuml-chart';
-      wrapper.style.cssText = 'text-align: center; margin: 16px 0;';
+      wrapper.style.cssText = 'text-align: center; margin: 16px 0; padding: 16px; border-radius: 8px;';
+
+      if (settings.theme === 'dark') {
+        wrapper.style.background = '#161b22';
+        wrapper.style.color = '#c9d1d9';
+      } else {
+        wrapper.style.background = '#f6f8fa';
+        wrapper.style.color = '#24292e';
+      }
 
       const img = document.createElement('img');
       img.src = imgUrl;
       img.alt = 'PlantUML Diagram';
-      img.style.cssText = 'max-width: 100%; height: auto; background: white; padding: 16px; border-radius: 8px;';
-      img.onerror = () => {
-        wrapper.innerHTML = `<pre style="background:#f6f8fa;padding:12px;border-radius:6px;overflow:auto;"><code>${escapeHtml(code)}</code></pre>`;
+      img.style.cssText = 'max-width: 100%; height: auto;';
+      img.loading = 'lazy';
+      img.crossOrigin = 'anonymous';
+
+      // 超时控制（8 秒）
+      let loaded = false;
+      const timeout = setTimeout(() => {
+        if (!loaded) {
+          console.warn('AINote PlantUML 加载超时:', imgUrl.substring(0, 120) + '...');
+          showPlantUmlFallback(pre, code, '加载超时（8秒），可能是网络问题或 URL 过长');
+        }
+      }, 8000);
+
+      img.onload = () => {
+        loaded = true;
+        clearTimeout(timeout);
       };
+
+      img.onerror = () => {
+        if (!loaded) {
+          clearTimeout(timeout);
+          showPlantUmlFallback(pre, code, '图片加载失败，可能是网络问题或图表语法错误');
+        }
+      };
+
+      // 如果已经加载完成（缓存），清除超时
+      if (img.complete) {
+        loaded = true;
+        clearTimeout(timeout);
+      }
 
       wrapper.appendChild(img);
       pre.parentNode.replaceChild(wrapper, pre);
-      index++;
     }
+  }
+
+  // PlantUML 降级显示：展示原始代码 + 语法高亮
+  function showPlantUmlFallback(pre, code, reason) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'plantuml-chart';
+    wrapper.style.cssText = 'text-align: left; margin: 16px 0; padding: 16px; border-radius: 8px;';
+
+    if (settings.theme === 'dark') {
+      wrapper.style.background = '#161b22';
+      wrapper.style.color = '#c9d1d9';
+    } else {
+      wrapper.style.background = '#fff8c5';
+      wrapper.style.color = '#24292e';
+    }
+
+    wrapper.innerHTML = `
+      <div style="font-size:12px;margin-bottom:8px;color:#d73a49;">⚠️ ${escapeHtml(reason)}</div>
+      <pre style="background:#f6f8fa;padding:12px;border-radius:6px;overflow:auto;"><code class="language-plantuml">${escapeHtml(code)}</code></pre>
+      <div style="font-size:12px;margin-top:8px;opacity:0.7;">
+        可访问 <a href="https://www.plantuml.com/plantuml" target="_blank" style="color:#0366d6;">PlantUML 官网</a> 在线预览，或检查图表语法是否正确。
+      </div>
+    `;
+
+    // 尝试语法高亮
+    if (typeof hljs !== 'undefined') {
+      const codeEl = wrapper.querySelector('code');
+      if (codeEl) {
+        try { hljs.highlightElement(codeEl); } catch (e) {}
+      }
+    }
+
+    pre.parentNode.replaceChild(wrapper, pre);
   }
 
   // ========== 渲染 Graphviz/DOT 图表 ==========
