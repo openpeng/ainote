@@ -911,20 +911,20 @@
 
   // ========== drawio URL 编码 ==========
   function encodeDrawioUrl(xml) {
-    // 1. URL 编码（与 draw.io 编码管线一致）
+    // 1. URL 编码（与 draw.io 编码管线一致：encodeURIComponent → deflate → base64）
     const encoded = encodeURIComponent(xml);
-    // 2. deflateRaw 压缩，输出为 binary string
+    // 2. deflateRaw 压缩
     const compressed = typeof pako !== 'undefined'
-      ? pako.deflateRaw(encoded, { to: 'string' })
+      ? pako.deflateRaw(encoded)
       : null;
     if (!compressed) return '';
-    // 3. draw.io 自定义 base64 编码
+    // 3. draw.io 自定义 base64 编码（基于 Uint8Array 索引）
     const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
     let result = '';
     for (let i = 0; i < compressed.length; i += 3) {
-      const a = compressed.charCodeAt(i);
-      const b = compressed.charCodeAt(i + 1);
-      const c = compressed.charCodeAt(i + 2);
+      const a = compressed[i];
+      const b = (i + 1 < compressed.length) ? compressed[i + 1] : NaN;
+      const c = (i + 2 < compressed.length) ? compressed[i + 2] : NaN;
       result += alphabet[a >> 2];
       result += alphabet[((a & 3) << 4) | (b >> 4)];
       result += isNaN(b) ? '' : alphabet[((b & 15) << 2) | (c >> 6)];
