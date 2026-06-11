@@ -2,6 +2,23 @@
 (function() {
   'use strict';
 
+  // ========== 获取当前 Tab ID ==========
+  let _tabIdPromise = null;
+  function getTabId() {
+    if (!_tabIdPromise) {
+      _tabIdPromise = new Promise((resolve) => {
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+          chrome.runtime.sendMessage({ action: 'getTabId' }, (response) => {
+            resolve(response?.tabId || null);
+          });
+        } else {
+          resolve(null);
+        }
+      });
+    }
+    return _tabIdPromise;
+  }
+
   // ========== 辅助函数 ==========
   function escapeHtml(text) {
     const div = document.createElement('div');
@@ -65,9 +82,9 @@
       lineNumbers: true,
       editorMode: false
     }, (items) => {
-      settings = items;
-      if (settings.autoRender && isMdFile()) {
-        renderMarkdown();
+      settings = { ...settings, ...items };
+      if (isMdFile()) {
+        addToolbar();
       }
     });
 
@@ -143,21 +160,80 @@
   }
 
   // ========== 动态加载资源 ==========
-  function loadScript(src) {
+  // CDN URL → 本地文件路径映射
+  const CDN_MAPPINGS = [
+    // 主库
+    [/markdown-it@[\d.]+.*markdown-it\.min\.js/, 'markdown-it.min.js'],
+    [/mermaid@[\d.]+.*mermaid\.min\.js/, 'mermaid.min.js'],
+    [/katex@[\d.]+.*katex\.min\.js/, 'katex.min.js'],
+    [/katex@[\d.]+.*katex\.min\.css/, 'katex.min.css'],
+    [/pako@[\d.]+.*pako\.min\.js/, 'pako.min.js'],
+    // Viz.js
+    [/viz\.js@[\d.]+.*\/viz\.js/, 'viz.min.js'],
+    [/viz\.js@[\d.]+.*lite\.render\.js/, 'full.render.min.js'],
+    [/viz\.js@[\d.]+.*full\.render\.min\.js/, 'full.render.min.js'],
+    // highlight.js
+    [/highlight\.js@[\d.]+.*\/lib\/core\.min\.js/, 'highlight.min.js'],
+    [/highlight\.js@[\d.]+.*\/lib\/languages\/(\w+)\.min\.js/, 'languages/$1.min.js'],
+    [/highlight\.js@[\d.]+.*\/styles\/([\w-]+)\.min\.css/, 'styles/$1.min.css'],
+  ];
+
+  function getLocalFileName(src) {
+    for (const [pattern, local] of CDN_MAPPINGS) {
+      const match = src.match(pattern);
+      if (match) {
+        return 'lib/' + local.replace(/\$(\d+)/g, (_, n) => match[parseInt(n)] || '');
+      }
+    }
+    return null;
+  }
+
+  function getLocalUrl(src) {
+    if (!getLocalFileName(src)) return src;
+    if (typeof chrome === 'undefined' || !chrome.runtime) return src;
+    return chrome.runtime.getURL(getLocalFileName(src));
+  }
+
+  // 通过动态 import() 将 JS 库加载到 ISOLATED world
+  // Content scripts 在 MV3 中可以通过 import() 加载 chrome-extension:// URL
+  // 部分库（如 mermaid 的 esbuild 产物）在 ESM 上下文会失败，改为间接 eval 执行
+  async function loadScript(src) {
+    const localFile = getLocalFileName(src);
+    if (localFile && typeof chrome !== 'undefined') {
+      const url = chrome.runtime.getURL(localFile);
+      try {
+        await import(url);
+        return;
+      } catch (e) {
+        console.warn('AINote import() 失败，改用间接 eval:', localFile);
+      }
+      // 间接 eval 在全局作用域执行，var 声明的变量会正确设为 window 属性
+      try {
+        const resp = await fetch(url);
+        const code = await resp.text();
+        (0, eval)(code);
+        return;
+      } catch (e2) {
+        console.warn('AINote eval 也失败，降级到 DOM 加载:', localFile, e2);
+      }
+    }
+    // 最终降级：通过 DOM <script> 标签加载（MAIN world）
+    const url = getLocalUrl(src);
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = src;
+      s.src = url;
       s.onload = resolve;
       s.onerror = reject;
       document.head.appendChild(s);
     });
   }
 
+  // CSS 通过 DOM <link> 加载（无 isolated world 问题）
   function loadCSS(href) {
     return new Promise((resolve, reject) => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = href;
+      link.href = getLocalUrl(href);
       link.onload = resolve;
       link.onerror = reject;
       document.head.appendChild(link);
@@ -381,8 +457,8 @@
 
     // 动态加载 Viz.js
     if (typeof Viz === 'undefined') {
-      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@3.6.0/viz.min.js');
-      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@3.6.0/full.render.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@2.1.2/viz.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@2.1.2/lite.render.js');
     }
 
     if (typeof Viz === 'undefined') return;
@@ -550,20 +626,9 @@
   async function loadHighlightJS(theme) {
     const themeName = theme === 'dark' ? 'github-dark' : 'github';
 
-    if (typeof hljs === 'undefined') {
-      // 加载核心
+    if (!hljsLoaded) {
+      // 加载已打包常用语言的高亮库（cdnjs 版内含 30+ 种语言）
       await loadScript('https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js');
-
-      // 加载常用语言
-      const languages = ['javascript', 'python', 'css', 'xml', 'bash', 'json', 'typescript', 'java', 'cpp', 'c', 'go', 'rust', 'sql', 'yaml', 'markdown'];
-      for (const lang of languages) {
-        try {
-          await loadScript(`https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/${lang}.min.js`);
-        } catch (e) {
-          // 忽略加载失败的语言
-        }
-      }
-
       hljsLoaded = true;
     }
 
@@ -576,7 +641,7 @@
       // 加载新主题
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = `https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/${themeName}.min.css`;
+      link.href = getLocalUrl(`https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/${themeName}.min.css`);
       link.setAttribute('data-hljs-theme', themeName);
       document.head.appendChild(link);
 
@@ -699,7 +764,7 @@
       fixSvgDisplay(container);
 
       isRendered = true;
-      addFloatingButton();
+      updateToolbarState();
 
     } catch (err) {
       console.error('AINote 渲染失败:', err);
@@ -744,10 +809,7 @@
       document.body.innerHTML = originalContent;
       isRendered = false;
       currentMarkdownText = '';
-
-      if (settings.autoRender && isMdFile()) {
-        addFloatingButton();
-      }
+      updateToolbarState();
     }
   }
 
@@ -763,7 +825,7 @@
     style.id = 'ainote-print-style';
     style.textContent = `
       @media print {
-        #ainote-float-btn, .ainote-editor-toolbar { display: none !important; }
+        #ainote-toolbar { display: none !important; }
         #ainote-rendered {
           max-width: 100% !important;
           margin: 0 !important;
@@ -934,40 +996,49 @@
     fixSvgDisplay(previewPanel);
   }
 
-  // ========== 浮动按钮 ==========
-  function addFloatingButton() {
-    if (document.getElementById('ainote-float-btn')) return;
+  // ========== 底部工具栏 ==========
+  function addToolbar() {
+    if (document.getElementById('ainote-toolbar')) return;
 
-    const btn = document.createElement('div');
-    btn.id = 'ainote-float-btn';
-    btn.innerHTML = '📝';
-    btn.title = 'AINote 渲染';
-    btn.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #1a73e8;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      z-index: 999999;
-      border: none;
-    `;
-    btn.addEventListener('click', () => {
-      if (isRendered) {
-        resetPage();
-      } else {
-        renderMarkdown();
-      }
-    });
-    document.body.appendChild(btn);
+    const bar = document.createElement('div');
+    bar.id = 'ainote-toolbar';
+    bar.style.cssText = 'position:fixed;bottom:20px;right:20px;display:flex;gap:8px;z-index:999999;';
+
+    function mkBtn(id, text, color, onClick) {
+      const btn = document.createElement('button');
+      btn.id = id;
+      btn.textContent = text;
+      btn.style.cssText = `padding:8px 16px;border:none;border-radius:6px;background:${color};color:#fff;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);white-space:nowrap;`;
+      btn.addEventListener('click', onClick);
+      return btn;
+    }
+
+    const btnRender = mkBtn('ainote-btn-render', '📝 渲染', '#1a73e8', () => renderMarkdown());
+    const btnEditor = mkBtn('ainote-btn-editor', '✏️ 编辑器', '#34a853', () => toggleEditorMode());
+    const btnPDF    = mkBtn('ainote-btn-pdf', '📄 导出PDF', '#f9ab00', () => exportToPDF());
+    const btnReset  = mkBtn('ainote-btn-reset', '🔙 恢复', '#ea4335', () => resetPage());
+
+    bar.appendChild(btnRender);
+    bar.appendChild(btnEditor);
+    bar.appendChild(btnPDF);
+    bar.appendChild(btnReset);
+    document.body.appendChild(bar);
+
+    setButtonVisible('ainote-btn-editor', false);
+    setButtonVisible('ainote-btn-pdf', false);
+    setButtonVisible('ainote-btn-reset', false);
+  }
+
+  function setButtonVisible(id, visible) {
+    const btn = document.getElementById(id);
+    if (btn) btn.style.display = visible ? '' : 'none';
+  }
+
+  function updateToolbarState() {
+    setButtonVisible('ainote-btn-editor', isRendered);
+    setButtonVisible('ainote-btn-pdf', isRendered);
+    setButtonVisible('ainote-btn-reset', isRendered);
+    setButtonVisible('ainote-btn-render', !isRendered);
   }
 
   // ========== 键盘快捷键 ==========
@@ -998,13 +1069,9 @@
   // ========== 页面加载检测 ==========
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      if (settings.autoRender && isMdFile()) {
-        addFloatingButton();
-      }
+      if (isMdFile()) addToolbar();
     });
   } else {
-    if (settings.autoRender && isMdFile()) {
-      addFloatingButton();
-    }
+    if (isMdFile()) addToolbar();
   }
 })();

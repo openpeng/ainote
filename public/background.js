@@ -26,6 +26,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // 创建右键菜单
 function createContextMenus() {
+  if (!chrome.contextMenus) return;
   // 先移除所有现有菜单
   chrome.contextMenus.removeAll(() => {
     // 在 .md 文件上右键时显示
@@ -33,14 +34,14 @@ function createContextMenus() {
       id: 'ainote-render',
       title: '📝 用 AINote 渲染',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
     });
 
     chrome.contextMenus.create({
       id: 'ainote-reset',
       title: '🔙 恢复原始页面',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
     });
 
     // 分隔线
@@ -48,7 +49,7 @@ function createContextMenus() {
       id: 'ainote-sep',
       type: 'separator',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
     });
 
     // 导出 PDF
@@ -56,7 +57,7 @@ function createContextMenus() {
       id: 'ainote-export-pdf',
       title: '📄 导出 PDF',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
     });
 
     // 切换编辑器模式
@@ -64,13 +65,14 @@ function createContextMenus() {
       id: 'ainote-toggle-editor',
       title: '✏️ 切换编辑器模式',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*.md', '*://*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
     });
   });
 }
 
 // 监听右键菜单点击
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+if (chrome.contextMenus) {
+  chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab || !tab.id) return;
 
   if (info.menuItemId === 'ainote-render') {
@@ -83,26 +85,18 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     chrome.tabs.sendMessage(tab.id, { action: 'toggleEditor' });
   }
 });
+}
 
 // 监听来自 content script 的消息（如果需要）
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'log') {
     console.log('[AINote Content]', message.data);
   }
+  if (message.action === 'getTabId') {
+    sendResponse({ tabId: sender.tab?.id });
+  }
   return false;
 });
 
-// 键盘快捷键处理（如果用户在 chrome://extensions/shortcuts 中配置）
-chrome.commands?.onCommand?.addListener((command) => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0] || !tabs[0].id) return;
-
-    if (command === 'render-toggle') {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'render' });
-    } else if (command === 'export-pdf') {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'exportPDF' });
-    } else if (command === 'toggle-editor') {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'toggleEditor' });
-    }
-  });
-});
+// 键盘快捷键处理（通过 content.js 中的 keydown 事件处理，不使用 commands API）
+// commands API 需要声明 suggested_key，且可能与 Chrome 内置快捷键冲突

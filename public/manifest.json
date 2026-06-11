@@ -11,31 +11,12 @@
   "permissions": [
     "activeTab",
     "storage",
+    "contextMenus",
     "scripting"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
-  "commands": {
-    "render-toggle": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+R"
-      },
-      "description": "渲染/重置 Markdown"
-    },
-    "export-pdf": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+D"
-      },
-      "description": "导出 PDF"
-    },
-    "toggle-editor": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+E"
-      },
-      "description": "切换编辑器模式"
-    }
-  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "AINote Markdown Renderer"
@@ -50,5 +31,17 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "bridge.js",
+        "lib/*",
+        "lib/languages/*",
+        "lib/styles/*",
+        "lib/fonts/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
