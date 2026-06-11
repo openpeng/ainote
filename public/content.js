@@ -240,6 +240,57 @@
     });
   }
 
+  // ========== 渲染错误提示 ==========
+  function showRenderError(pre, langClass, errorMsg) {
+    const code = pre.querySelector('code')?.textContent || '';
+    const isDark = settings.theme === 'dark';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ainote-render-error';
+    wrapper.style.cssText = `
+      margin: 16px 0;
+      border: 1px solid #d73a49;
+      border-radius: 8px;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    `;
+
+    wrapper.innerHTML = `
+      <div style="
+        background: #d73a49;
+        color: #fff;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+      ">⚠️ ${langClass} 渲染失败</div>
+      <div style="
+        padding: 12px 16px;
+        background: ${isDark ? '#1b1b2f' : '#fff8f5'};
+        color: ${isDark ? '#e1e4e8' : '#24292f'};
+        font-size: 13px;
+      ">
+        <div style="margin-bottom: 12px; word-break: break-word;">
+          <strong>错误原因：</strong><span style="color:#d73a49;">${escapeHtml(errorMsg)}</span>
+        </div>
+        <details style="cursor: pointer;">
+          <summary style="color: ${isDark ? '#8b949e' : '#586069'}; margin-bottom: 8px; user-select: none;">
+            查看原始代码
+          </summary>
+          <pre style="
+            background: ${isDark ? '#0d1117' : '#f6f8fa'};
+            padding: 12px;
+            border-radius: 6px;
+            overflow: auto;
+            max-height: 300px;
+            margin: 0;
+          "><code>${escapeHtml(code)}</code></pre>
+        </details>
+      </div>
+    `;
+
+    pre.parentNode.replaceChild(wrapper, pre);
+  }
+
   // ========== 渲染 Mermaid 图表 ==========
   async function renderMermaidBlocks(container) {
     if (typeof mermaid === 'undefined') return;
@@ -269,9 +320,14 @@
         wrapper.innerHTML = svg;
         pre.parentNode.replaceChild(wrapper, pre);
       } catch (err) {
-        console.warn('AINote Mermaid 渲染失败:', err);
+        showRenderError(pre, 'Mermaid', err.message || String(err));
       }
     }
+  }
+
+  // ========== PlantUML 降级显示 ==========
+  function showPlantUmlFallback(pre, code, errorMsg) {
+    showRenderError(pre, 'PlantUML', errorMsg);
   }
 
   // ========== PlantUML 编码（用于生成图片 URL） ==========
@@ -436,11 +492,38 @@
     }
 
     // 所有服务器都失败，显示降级内容
+    const isDark = settings.theme === 'dark';
     wrapper.innerHTML = `
-      <div style="font-size:12px;margin-bottom:8px;color:#d73a49;">⚠️ 所有 PlantUML 服务器均不可达</div>
-      <pre style="background:#fff8c5;padding:12px;border-radius:6px;overflow:auto;"><code class="language-plantuml">${escapeHtml(code)}</code></pre>
-      <div style="font-size:12px;margin-top:8px;opacity:0.7;">
-        可访问 <a href="https://www.plantuml.com/plantuml" target="_blank" style="color:#0366d6;">PlantUML 官网</a> 在线预览，或检查图表语法。
+      <div style="
+        background: #d73a49;
+        color: #fff;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 8px 8px 0 0;
+        margin: -16px -16px 0 -16px;
+      ">⚠️ PlantUML 渲染失败</div>
+      <div style="
+        padding: 12px 0 0 0;
+        font-size: 13px;
+        color: ${isDark ? '#e1e4e8' : '#24292f'};
+      ">
+        <div style="margin-bottom: 12px; word-break: break-word;">
+          <strong>错误原因：</strong><span style="color:#d73a49;">所有 PlantUML 服务器均不可达</span>
+        </div>
+        <details style="cursor: pointer;">
+          <summary style="color: ${isDark ? '#8b949e' : '#586069'}; margin-bottom: 8px; user-select: none;">
+            查看原始代码
+          </summary>
+          <pre style="
+            background: ${isDark ? '#0d1117' : '#f6f8fa'};
+            padding: 12px;
+            border-radius: 6px;
+            overflow: auto;
+            max-height: 300px;
+            margin: 0;
+          "><code>${escapeHtml(code)}</code></pre>
+        </details>
       </div>
     `;
     // 尝试语法高亮
@@ -480,7 +563,7 @@
         wrapper.appendChild(svg);
         pre.parentNode.replaceChild(wrapper, pre);
       } catch (err) {
-        console.warn('AINote Graphviz 渲染失败:', err);
+        showRenderError(pre, 'Graphviz', err.message || String(err));
       }
 
       index++;
@@ -516,12 +599,10 @@
           wrapper.innerHTML = result.svg;
           pre.parentNode.replaceChild(wrapper, pre);
         } else {
-          // 降级：显示原始代码
-          console.warn('AINote D2 渲染失败: HTTP ' + response.status);
+          showRenderError(pre, 'D2', `HTTP ${response.status}`);
         }
       } catch (err) {
-        console.warn('AINote D2 渲染失败:', err);
-        // 降级：显示原始代码（带语法高亮）
+        showRenderError(pre, 'D2', err.message || String(err));
       }
 
       index++;

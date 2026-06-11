@@ -126,29 +126,39 @@ npm run build
 
 ```
 ainote/
-├── public/                  # 浏览器扩展（Manifest V3）
-│   ├── manifest.json         # 扩展配置
-│   ├── background.js         # 后台脚本（右键菜单等）
-│   ├── content.js            # 内容脚本（核心渲染逻辑）
-│   ├── popup.html            # 弹出面板 UI
-│   ├── popup.js              # 弹出面板逻辑
+├── public/                    # 浏览器扩展（Manifest V3）
+│   ├── manifest.json          # 扩展配置
+│   ├── background.js          # Service Worker（右键菜单、快捷键）
+│   ├── bridge.js              # 隔离世界通信桥梁
+│   ├── content.js             # 内容脚本（核心渲染逻辑）
+│   ├── popup.html             # 弹出面板 UI
+│   ├── popup.js               # 弹出面板逻辑
 │   ├── styles/
-│   │   ├── content.css      # 渲染样式
-│   │   └── popup.css        # 弹出面板样式
-│   └── icon*.svg            # 扩展图标
-├── src/                      # Web 应用源码
-│   ├── css/style.css        # 页面样式
-│   ├── js/main.js           # 主入口
-│   ├── js/parser.js         # Markdown 解析器
-│   └── extension/styles/    # 扩展样式（备用）
-├── docs/                     # 测试文档
-│   ├── test-ainote.md       # 功能测试文档
-│   ├── test-arch.md         # 架构图测试文档
-│   ├── EXTENSION_LOADING.md # 扩展加载说明
-│   └── EXTENSION_TESTING.md # 扩展测试计划
-├── index.html                # Web 应用入口
-├── vite.config.js            # Vite 构建配置
-└── package.json              # 项目依赖
+│   │   ├── content.css        # 渲染样式
+│   │   └── popup.css          # 弹出面板样式
+│   ├── lib/                   # 本地化库文件（CSP 安全）
+│   │   ├── mermaid.min.js     # Mermaid 图表渲染 (2.6MB)
+│   │   ├── katex.min.js/css   # KaTeX 数学公式
+│   │   ├── markdown-it.min.js # Markdown 解析器
+│   │   ├── highlight.min.js   # 代码高亮
+│   │   ├── pako.min.js        # PlantUML 文本压缩
+│   │   ├── viz.min.js         # Graphviz/DOT 渲染
+│   │   ├── languages/         # Highlight.js 语言包 (15+)
+│   │   ├── styles/            # Highlight.js 主题 CSS
+│   │   └── fonts/             # KaTeX 字体文件
+│   └── icon*.svg              # 扩展图标
+├── src/                       # Web 应用源码
+│   ├── css/style.css          # 页面样式
+│   ├── js/main.js             # 主入口
+│   └── js/parser.js           # Markdown 解析器
+├── docs/                      # 测试文档
+│   ├── test-ainote.md         # 功能测试文档
+│   ├── test-arch.md           # 架构图测试文档
+│   ├── EXTENSION_LOADING.md   # 扩展加载说明
+│   └── EXTENSION_TESTING.md   # 扩展测试计划
+├── index.html                 # Web 应用入口
+├── vite.config.js             # Vite 构建配置
+└── package.json               # 项目依赖
 ```
 
 ---
@@ -166,6 +176,27 @@ ainote/
 | 公式渲染 | [KaTeX](https://katex.org/) |
 | 代码高亮 | [Highlight.js](https://highlightjs.org/) |
 | 扩展规范 | [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/) |
+
+---
+
+## 🔒 CSP 安全与本地化
+
+为兼容 Chrome Manifest V3 的 **内容安全策略 (CSP)**，所有第三方库已本地化放置在 `public/lib/` 目录下，扩展不再依赖任何外部 CDN 资源。
+
+### 隔离世界加载
+
+Manifest V3 的内容脚本运行在隔离世界 (isolated world) 中，无法直接访问页面 DOM 的全局变量。AINote 通过 `bridge.js` 实现内容脚本与页面上下文的通信桥梁，确保：
+
+- 本地库注入到页面上下文（`page` world），避免 CSP 冲突
+- 内容脚本通过 CustomEvent 与注入的库进行通信
+- 渲染结果回传到内容脚本侧进行 DOM 操作
+
+### 渲染错误提示
+
+当图表/公式渲染失败时，AINote 会显示结构化的错误信息卡片，包含：
+- 错误原因说明
+- 可展开查看原始代码
+- 适配亮色/暗色主题
 
 ---
 
@@ -187,6 +218,47 @@ ainote/
 - [ ] 暗黑模式
 - [ ] 离线模式（内置 PlantUML 渲染服务）
 - [ ] 移动端适配
+
+---
+
+## 📋 更新日志
+
+### v1.5.0 (2026-06)
+
+- 🔒 **CSP 安全修复**：所有库文件本地化至 `public/lib/`，不再依赖外部 CDN
+- 🔧 **隔离世界修复**：新增 `bridge.js`，解决 Manifest V3 content script 与页面上下文通信问题
+- 🎨 **渲染错误提示**：图表/公式渲染失败时显示结构化错误信息卡片
+- 🎨 **PlantUML 降级优化**：失败时展示更友好的错误界面，支持亮暗主题
+
+### v1.4.0 (2026-06)
+
+- 📖 添加详细的 README 文档
+
+### v1.3.0
+
+- 🚀 PlantUML 多服务器 Fallback，支持自定义服务器
+- ⏱ 每个服务器 8 秒超时自动切换
+
+### v1.2.1
+
+- 🐛 优化 PlantUML 编码逻辑
+
+### v1.2.0
+
+- ✨ 支持 D2、Graphviz/DOT 等多格式 AI 架构图
+- ✨ 新增 viz.js 和 D2 API 集成
+
+### v1.1.0
+
+- ✨ 编辑器模式（左右分栏实时预览）
+- ✨ PDF 导出保留样式
+- ✨ 右键菜单快捷操作
+- ✨ 键盘快捷键
+- ✨ 多套主题（默认 / GitHub / VuePress / GitBook）
+
+### v1.0.0
+
+- 🎉 初始发布：Mermaid + PlantUML + KaTeX + Highlight.js
 
 ---
 
