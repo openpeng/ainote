@@ -85,12 +85,18 @@
       settings = { ...settings, ...items };
       if (isMdFile()) {
         addToolbar();
+      } else if (isDrawioFile()) {
+        renderDrawio();
       }
     });
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === 'render') {
-        renderMarkdown();
+        if (isDrawioFile()) {
+          renderDrawio();
+        } else {
+          renderMarkdown();
+        }
         sendResponse({ status: '渲染完成' });
       } else if (message.action === 'reset') {
         resetPage();
@@ -131,6 +137,15 @@
       if (blobContent.length > 0) return true;
     }
 
+    return false;
+  }
+
+  // ========== drawio 文件检测 ==========
+  function isDrawioFile() {
+    const path = window.location.pathname;
+    if (path.endsWith('.drawio') || path.endsWith('.dio')) return true;
+    const url = window.location.href;
+    if (url.includes('/raw/') && (path.includes('.drawio') || path.includes('.dio'))) return true;
     return false;
   }
 
@@ -894,6 +909,113 @@
     }
   }
 
+  // ========== drawio URL 编码 ==========
+  function encodeDrawioUrl(xml) {
+    // 1. deflateRaw 压缩
+    const compressed = typeof pako !== 'undefined'
+      ? pako.deflateRaw(new TextEncoder().encode(xml))
+      : null;
+    if (!compressed) return '';
+    // 2. 转为单字节数组（pako.deflateRaw 返回 Uint8Array）
+    const bytes = new Uint8Array(compressed);
+    // 3. 自定义 base64 编码
+    const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
+    let result = '';
+    let i = 0;
+    const len = bytes.length;
+    while (i < len) {
+      const a = bytes[i++];
+      const b = bytes[i++] || 0;
+      const c = bytes[i++] || 0;
+      result += alphabet[a >> 2];
+      result += alphabet[((a & 3) << 4) | (b >> 4)];
+      if (i - 1 < len) result += alphabet[((b & 15) << 2) | (c >> 6)];
+      if (i - 2 < len) result += alphabet[c & 63];
+    }
+    return result;
+  }
+
+  // ========== 渲染 drawio 文件 ==========
+  async function renderDrawio() {
+    if (isRendered) return;
+
+    // 获取 XML 内容
+    let xml = '';
+    const preEl = document.querySelector('pre');
+    if (preEl) {
+      xml = preEl.textContent || '';
+    } else {
+      xml = document.body.innerText || '';
+    }
+
+    if (!xml || !xml.includes('<mxfile')) return;
+
+    originalContent = document.body.innerHTML;
+
+    // 显示加载提示
+    document.body.innerHTML = `
+      <div id="ainote-drawio-loading" style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: sans-serif;
+        color: #666;
+      ">📐 AINote 正在加载图表...</div>
+    `;
+
+    try {
+      // 加载 pako（如果尚未加载）
+      if (typeof pako === 'undefined') {
+        await loadScript('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js');
+      }
+
+      const encoded = encodeDrawioUrl(xml);
+      if (!encoded) {
+        document.body.innerHTML = originalContent;
+        return;
+      }
+
+      const viewerUrl = `https://viewer.diagrams.net/?lightbox=1&chrome=0&edit=_blank#R${encoded}`;
+
+      // 替换 body 为全屏 iframe
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflow = 'hidden';
+      document.body.innerHTML = `<iframe src="${viewerUrl}"
+        style="border:none;width:100vw;height:100vh;"
+        allowfullscreen></iframe>`;
+
+      isRendered = true;
+      addDrawioToolbar();
+    } catch (err) {
+      console.warn('AINote drawio 渲染失败:', err);
+      document.body.innerHTML = originalContent;
+    }
+  }
+
+  // ========== drawio 工具栏 ==========
+  function addDrawioToolbar() {
+    if (document.getElementById('ainote-toolbar')) return;
+
+    const bar = document.createElement('div');
+    bar.id = 'ainote-toolbar';
+    bar.style.cssText = 'position:fixed;bottom:20px;right:20px;display:flex;gap:8px;z-index:999999;';
+
+    function mkBtn(id, text, color, onClick) {
+      const btn = document.createElement('button');
+      btn.id = id;
+      btn.textContent = text;
+      btn.style.cssText = `padding:8px 16px;border:none;border-radius:6px;background:${color};color:#fff;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);white-space:nowrap;`;
+      btn.addEventListener('click', onClick);
+      return btn;
+    }
+
+    const btnReset = mkBtn('ainote-btn-reset', '🔙 查看原始 XML', '#ea4335', () => resetPage());
+    bar.appendChild(btnReset);
+    document.body.appendChild(bar);
+  }
+
   // ========== 导出 PDF ==========
   function exportToPDF() {
     if (!isRendered) {
@@ -1151,8 +1273,10 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       if (isMdFile()) addToolbar();
+      else if (isDrawioFile()) renderDrawio();
     });
   } else {
     if (isMdFile()) addToolbar();
+    else if (isDrawioFile()) renderDrawio();
   }
 })();

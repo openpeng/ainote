@@ -1,6 +1,6 @@
 # AINote — AI 输出 Markdown 增强阅读器
 
-> 让 AI 生成的 Markdown 文档（含各种图表、公式、代码）在浏览器中完美渲染。
+> 让 AI 生成的 Markdown 文档（含各种图表、公式、代码）在浏览器中完美渲染。同时支持 `.drawio` 文件的在线查看。
 
 [![GitHub](https://img.shields.io/badge/GitHub-openpeng/ainote-blue?logo=github)](https://github.com/openpeng/ainote)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
@@ -20,6 +20,7 @@ AINote 是一个浏览器扩展 + Web 阅读器，专门解决 **AI 输出的 Ma
 | **PlantUML** | PlantUML Server | 架构图、组件图、状态图（多服务器 fallback） |
 | **Graphviz / DOT** | viz.js | 有向图、依赖图 |
 | **D2** | D2 API | 现代架构图、数据流图 |
+| **Draw.io** | diagrams.net Viewer | 直接查看 `.drawio` / `.dio` 文件 |
 
 ### 📐 数学公式
 
@@ -97,6 +98,14 @@ npm run build
 ### 导出 PDF
 
 渲染完成后，点击「导出 PDF」或按 `Ctrl+Shift+D`，浏览器打印界面选择「另存为 PDF」。
+
+### 查看 .drawio 文件
+
+访问 `.drawio` / `.dio` 文件（如 GitHub 上的流程图纸），AINote 会自动通过 **diagrams.net 在线查看器** 渲染图表。
+
+- 页面加载时自动渲染为可视化图表
+- 点击右下角「查看原始 XML」可切换回代码视图
+- 右键菜单同样支持渲染/恢复操作
 
 ---
 
@@ -229,6 +238,7 @@ Manifest V3 的内容脚本运行在隔离世界 (isolated world) 中，无法�
 - 🔧 **隔离世界修复**：新增 `bridge.js`，解决 Manifest V3 content script 与页面上下文通信问题
 - 🎨 **渲染错误提示**：图表/公式渲染失败时显示结构化错误信息卡片
 - 🎨 **PlantUML 降级优化**：失败时展示更友好的错误界面，支持亮暗主题
+- ✨ 支持 `.drawio` / `.dio` 文件渲染，通过 diagrams.net 在线查看器
 
 ### v1.4.0 (2026-06)
 

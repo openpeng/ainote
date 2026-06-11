@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AINote Markdown Renderer",
-  "version": "1.1.0",
-  "description": "自动渲染 .md 文件为美观的 HTML 页面，支持 Mermaid 图表、KaTeX 公式、代码高亮、导出 PDF、编辑器模式",
+  "version": "1.2.0",
+  "description": "自动渲染 .md/.drawio 文件为美观的 HTML 页面，支持 Mermaid/PlantUML/D2/Graphviz 图表、KaTeX 公式、代码高亮、导出 PDF、编辑器模式",
   "icons": {
     "16": "icon16.svg",
     "48": "icon48.svg",

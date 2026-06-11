@@ -1,5 +1,10 @@
 // AINote 后台脚本 (Manifest V3 Service Worker)
 
+// 右键菜单 URL 模式
+const MD_PATTERNS = ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*'];
+const DRAWIO_PATTERNS = ['*://*/*.drawio', '*://*/*.dio', '*://*/*.drawio/*raw*', '*://*/*.dio/*raw*'];
+const ALL_PATTERNS = [...MD_PATTERNS, ...DRAWIO_PATTERNS];
+
 // 插件安装时初始化默认设置
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
@@ -29,19 +34,18 @@ function createContextMenus() {
   if (!chrome.contextMenus) return;
   // 先移除所有现有菜单
   chrome.contextMenus.removeAll(() => {
-    // 在 .md 文件上右键时显示
     chrome.contextMenus.create({
       id: 'ainote-render',
       title: '📝 用 AINote 渲染',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ALL_PATTERNS
     });
 
     chrome.contextMenus.create({
       id: 'ainote-reset',
       title: '🔙 恢复原始页面',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ALL_PATTERNS
     });
 
     // 分隔线
@@ -49,23 +53,23 @@ function createContextMenus() {
       id: 'ainote-sep',
       type: 'separator',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: ALL_PATTERNS
     });
 
-    // 导出 PDF
+    // 导出 PDF（仅 MD 文件）
     chrome.contextMenus.create({
       id: 'ainote-export-pdf',
       title: '📄 导出 PDF',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: MD_PATTERNS
     });
 
-    // 切换编辑器模式
+    // 切换编辑器模式（仅 MD 文件）
     chrome.contextMenus.create({
       id: 'ainote-toggle-editor',
       title: '✏️ 切换编辑器模式',
       contexts: ['page'],
-      documentUrlPatterns: ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*']
+      documentUrlPatterns: MD_PATTERNS
     });
   });
 }
@@ -97,6 +101,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return false;
 });
-
-// 键盘快捷键处理（通过 content.js 中的 keydown 事件处理，不使用 commands API）
-// commands API 需要声明 suggested_key，且可能与 Chrome 内置快捷键冲突
