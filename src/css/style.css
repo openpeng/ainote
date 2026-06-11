@@ -125,7 +125,7 @@ body {
 }
 
 /* ---- 工具栏 ---- */
-#toolbar {
+#ainote-toolbar {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -134,32 +134,12 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.file-input-label {
-  display: inline-flex;
+#ainote-toolbar-actions {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: var(--btn-bg);
-  border: 1px solid var(--btn-border);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--text);
-  transition: background 0.15s;
-}
-
-.file-input-label:hover {
-  background: var(--border);
-}
-
-#themeToggle {
-  margin-left: auto;
-  background: var(--btn-bg);
-  border: 1px solid var(--btn-border);
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 1rem;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 /* ---- Markdown 正文样式 ---- */
@@ -362,6 +342,149 @@ body {
 /* ---- KaTeX 公式 ---- */
 .markdown-body .katex {
   font-size: 1.1em;
+}
+
+/* ---- 工具栏按钮 ---- */
+.ainote-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text);
+  transition: background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ainote-toolbar-btn:hover {
+  background: var(--border);
+}
+
+/* ---- 图表容器通用样式 ---- */
+.ainote-mermaid,
+.ainote-plantuml,
+.ainote-graphviz,
+.ainote-d2,
+.ainote-wavedrom,
+.ainote-nomnoml,
+.ainote-vega {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.ainote-mermaid svg,
+.ainote-plantuml svg,
+.ainote-graphviz svg,
+.ainote-d2 svg,
+.ainote-wavedrom svg,
+.ainote-nomnoml svg,
+.ainote-vega svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---- 渲染错误 ---- */
+.ainote-render-error pre {
+  background: #ffeef0 !important;
+  border-color: #ffc1ba !important;
+  color: #82071e !important;
+}
+
+[data-theme="dark"] .ainote-render-error pre {
+  background: #300 !important;
+  border-color: #600 !important;
+  color: #f85149 !important;
+}
+
+/* ---- 编辑器模式 ---- */
+#ainote-editor-wrapper {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 60px);
+}
+
+#ainote-editor-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#ainote-preview-panel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+/* ---- 设置面板 ---- */
+#ainote-settings-panel {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+#ainote-settings-panel select,
+#ainote-settings-panel input {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ---- JSON 查看器 ---- */
+.ainote-json-viewer {
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+/* ---- CSV 表格 ---- */
+.ainote-csv-table {
+  font-size: 13px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ainote-csv-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* ---- 错误页面 ---- */
+.ainote-error {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 18px;
+}
+
+/* ---- 打印样式 ---- */
+@media print {
+  #sidebar { display: none !important; }
+  #ainote-toolbar { display: none !important; }
+  #ainote-settings-panel { display: none !important; }
+  #content { max-width: 100% !important; padding: 20px !important; }
+  #markdown-body { max-width: 100% !important; margin: 0 !important; padding: 20px !important; }
+  .copy-btn { display: none !important; }
 }
 
 /* ---- 响应式 ---- */

@@ -16,18 +16,21 @@
       <nav id="toc"></nav>
     </aside>
     <main id="content">
-      <div id="toolbar">
-        <label class="file-input-label">
-          📂 打开 Markdown
-          <input type="file" id="fileInput" accept=".md,.markdown,.txt" hidden />
-        </label>
-        <button id="themeToggle" title="切换主题">🌓</button>
+      <div id="ainote-toolbar">
+        <div id="ainote-toolbar-actions">
+          <label class="file-input-label ainote-toolbar-btn" title="打开文件">
+            📂 打开
+            <input type="file" id="fileInput"
+              accept=".md,.markdown,.json,.csv,.tsv,.ipynb,.geojson,.topojson,.adoc,.asciidoc,.txt"
+              hidden />
+          </label>
+          <button class="ainote-toolbar-btn" id="themeToggle" title="切换主题">🌓</button>
+        </div>
       </div>
       <article id="markdown-body" class="markdown-body"></article>
     </main>
   </div>
 
-  <!-- 主入口 -->
   <script type="module" src="/src/js/main.js"></script>
 </body>
 </html>

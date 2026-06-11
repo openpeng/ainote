@@ -1,32 +1,52 @@
 {
   "name": "ainote",
   "version": "1.0.0",
-  "description": "AINote - 功能丰富的 Markdown 阅读器，支持 Mermaid、PlantUML、KaTeX、Shiki 高亮",
+  "description": "AINote - 全能文件阅读器，支持 Markdown/JSON/CSV/IPYNB/GeoJSON/AsciiDoc，集成 Mermaid/PlantUML/Graphviz/D2/WaveDrom/Nomnoml/Vega 图表，KaTeX 公式，Shiki 代码高亮，编辑器模式，PDF 导出",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": ["markdown", "reader", "mermaid", "katex", "shiki"],
+  "keywords": [
+    "markdown",
+    "reader",
+    "mermaid",
+    "plantuml",
+    "graphviz",
+    "d2",
+    "wavedrom",
+    "vega",
+    "katex",
+    "shiki",
+    "ipynb",
+    "geojson",
+    "chromium-extension"
+  ],
   "author": "openpeng",
   "license": "MIT",
   "devDependencies": {
     "vite": "^8.0.16"
   },
   "dependencies": {
+    "@viz-js/viz": "^3.28.0",
+    "asciidoctor": "^3.0.4",
     "katex": "^0.17.0",
+    "leaflet": "^1.9.4",
     "markdown-it": "^14.2.0",
     "markdown-it-abbr": "^2.0.0",
     "markdown-it-deflist": "^3.0.1",
     "markdown-it-emoji": "^3.0.0",
     "markdown-it-footnote": "^4.0.0",
     "markdown-it-katex": "^2.0.3",
-    "markdown-it-plantuml": "^1.4.1",
     "markdown-it-sub": "^2.0.0",
     "markdown-it-sup": "^2.0.0",
     "markdown-it-task-lists": "^2.1.1",
     "mermaid": "^11.15.0",
-    "shiki": "^4.2.0"
+    "nomnoml": "^1.7.0",
+    "pako": "^2.1.0",
+    "shiki": "^4.2.0",
+    "vega-embed": "^7.1.0",
+    "wavedrom": "^3.6.1"
   }
 }

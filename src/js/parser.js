@@ -8,20 +8,39 @@ import deflist from 'markdown-it-deflist';
 import footnote from 'markdown-it-footnote';
 import sub from 'markdown-it-sub';
 import sup from 'markdown-it-sup';
-import emoji from 'markdown-it-emoji';
+import { full as emoji } from 'markdown-it-emoji';
 import taskLists from 'markdown-it-task-lists';
-import plantuml from 'markdown-it-plantuml';
 import katex from 'markdown-it-katex';
 
-// Mermaid 插件：把 ```mermaid 代码块转为 <pre class="mermaid"> 供前端渲染
-function mermaidPlugin(md) {
-  const defaultFence = md.renderer.rules.fence;
+// 图表语言列表（不进行代码高亮，由渲染器处理）
+const DIAGRAM_LANGS = [
+  'mermaid', 'plantuml', 'uml', 'dot', 'graphviz',
+  'd2', 'wave', 'wavedrom', 'nomnoml', 'vega',
+  'vega-lite', 'math', 'katex', 'tex',
+];
+
+// 通用图表 fence 插件：保留代码块供渲染器检测
+function diagramFencePlugin(md) {
+  const defaultFence = md.renderer.rules.fence || ((tokens, idx) => {
+    const token = tokens[idx];
+    const lang = token.info.trim();
+    const code = token.content;
+    if (lang) {
+      return `<pre><code class="language-${md.utils.escapeHtml(lang)}">${md.utils.escapeHtml(code)}</code></pre>\n`;
+    }
+    return `<pre><code>${md.utils.escapeHtml(code)}</code></pre>\n`;
+  });
+
   md.renderer.rules.fence = (tokens, idx, options, env, slf) => {
     const token = tokens[idx];
-    if (token.info.trim() === 'mermaid') {
+    const lang = token.info.trim().toLowerCase();
+
+    // 图表语言：输出带 language-xxx 类的代码块，供渲染器检测
+    if (DIAGRAM_LANGS.includes(lang)) {
       const code = token.content;
-      return `<pre class="mermaid">${md.utils.escapeHtml(code)}</pre>`;
+      return `<pre><code class="language-${md.utils.escapeHtml(lang)}">${md.utils.escapeHtml(code)}</code></pre>\n`;
     }
+
     return defaultFence(tokens, idx, options, env, slf);
   };
 }
@@ -31,11 +50,11 @@ function shikiPlugin(md, highlighter) {
   const defaultFence = md.renderer.rules.fence;
   md.renderer.rules.fence = (tokens, idx, options, env, slf) => {
     const token = tokens[idx];
-    const lang = token.info.trim();
+    const lang = token.info.trim().toLowerCase();
     const code = token.content;
 
-    // 跳过 mermaid/plantuml/katex 等非代码块
-    if (['mermaid', 'plantuml', 'katex', 'math', 'tex'].includes(lang)) {
+    // 跳过图表语言（由渲染器处理）
+    if (DIAGRAM_LANGS.includes(lang)) {
       return defaultFence(tokens, idx, options, env, slf);
     }
 
@@ -58,13 +77,12 @@ function shikiPlugin(md, highlighter) {
  */
 export function createParser(shikiHighlighter = null) {
   const md = markdownit({
-    html: true,        // 允许 HTML 标签
-    breaks: true,      // 换行转为 <br>
-    linkify: true,     // 自动识别链接
-    typographer: true, // 引号替换等排版优化
+    html: true,
+    breaks: true,
+    linkify: true,
+    typographer: true,
   });
 
-  // 注册插件
   md.use(abbr);
   md.use(deflist);
   md.use(footnote);
@@ -72,14 +90,12 @@ export function createParser(shikiHighlighter = null) {
   md.use(sup);
   md.use(emoji);
   md.use(taskLists, { enabled: true });
-  md.use(plantuml);
   md.use(katex, {
     throwOnError: false,
     strict: false,
   });
-  md.use(mermaidPlugin);
+  md.use(diagramFencePlugin);
 
-  // Shiki 高亮（如果已加载）
   if (shikiHighlighter) {
     md.use(shikiPlugin, shikiHighlighter);
   }
@@ -94,4 +110,5 @@ export function renderMarkdown(md, text) {
   return md.render(text);
 }
 
+export { DIAGRAM_LANGS };
 export default createParser;
