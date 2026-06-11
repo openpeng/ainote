@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AINote Markdown Renderer",
-  "version": "1.2.0",
-  "description": "自动渲染 .md/.drawio 文件为美观的 HTML 页面，支持 Mermaid/PlantUML/D2/Graphviz 图表、KaTeX 公式、代码高亮、导出 PDF、编辑器模式",
+  "version": "1.3.0",
+  "description": "自动渲染 .md/.drawio/.ipynb/.csv/.geojson/.adoc/.json 文件，支持 Mermaid/PlantUML/D2/Graphviz/WaveDrom/Nomnoml/Vega 图表、KaTeX 公式、代码高亮、导出 PDF、编辑器模式",
   "icons": {
     "16": "icon16.svg",
     "48": "icon48.svg",
@@ -24,7 +24,25 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": [
+        "renderers/renderer-registry.js",
+        "renderers/render-pipeline.js",
+        "renderers/renderer-mermaid.js",
+        "renderers/renderer-plantuml.js",
+        "renderers/renderer-graphviz.js",
+        "renderers/renderer-d2.js",
+        "renderers/renderer-katex.js",
+        "renderers/renderer-hljs.js",
+        "renderers/renderer-wavedrom.js",
+        "renderers/renderer-nomnoml.js",
+        "renderers/renderer-vega.js",
+        "renderers/renderer-ipynb.js",
+        "renderers/renderer-csv.js",
+        "renderers/renderer-geojson.js",
+        "renderers/renderer-adoc.js",
+        "renderers/renderer-json.js",
+        "content.js"
+      ],
       "css": ["styles/content.css"],
       "run_at": "document_idle"
     }

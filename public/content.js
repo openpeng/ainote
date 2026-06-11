@@ -1,4 +1,6 @@
-// AINote 内容脚本 - 渲染 .md 文件
+// AINote 内容脚本 - 编排器
+// 负责: 文件检测、配置管理、工具栏、快捷键、编辑器模式
+// 渲染逻辑已拆分到 renderers/ 目录下的独立插件中
 (function() {
   'use strict';
 
@@ -35,16 +37,15 @@
     fontSize: 16,
     lineNumbers: true,
     editorMode: false,
-    // PlantUML 服务器配置（按优先级排列，自动 fallback）
-    plantUmlServer: 'auto', // 'auto' | 'official' | 'custom'
+    // PlantUML 服务器配置
+    plantUmlServer: 'auto',
     plantUmlCustomServer: ''
   };
 
-  // PlantUML 服务器列表（按推荐顺序）
+  // PlantUML 服务器列表
   const PLANTUML_SERVERS = {
-    official:   'https://www.plantuml.com/plantuml',
-    // 国内镜像（如有可用，用户可自定义填入）
-    mirror_cn:  '', // 预留，用户可在设置中填写
+    official: 'https://www.plantuml.com/plantuml',
+    mirror_cn: ''
   };
 
   // 根据设置获取待尝试的服务器列表
@@ -58,18 +59,16 @@
         if (settings.plantUmlCustomServer) {
           servers.push(settings.plantUmlCustomServer.replace(/\/+$/, ''));
         }
-        servers.push(PLANTUML_SERVERS.official); // custom 失败也 fallback 到官方
+        servers.push(PLANTUML_SERVERS.official);
         break;
       case 'auto':
       default:
-        // 先试用官方，后续可加入延迟检测自动排序
         servers.push(PLANTUML_SERVERS.official);
         if (settings.plantUmlCustomServer) {
           servers.push(settings.plantUmlCustomServer.replace(/\/+$/, ''));
         }
         break;
     }
-    // 去重
     return [...new Set(servers)];
   }
 
@@ -87,6 +86,8 @@
         addToolbar();
       } else if (isDrawioFile()) {
         renderDrawio();
+      } else if (detectStandaloneFormat()) {
+        addStandaloneToolbar();
       }
     });
 
@@ -94,6 +95,8 @@
       if (message.action === 'render') {
         if (isDrawioFile()) {
           renderDrawio();
+        } else if (detectStandaloneFormat()) {
+          renderStandaloneFormat();
         } else {
           renderMarkdown();
         }
@@ -118,6 +121,8 @@
   } else {
     if (isMdFile()) {
       renderMarkdown();
+    } else if (detectStandaloneFormat()) {
+      renderStandaloneFormat();
     }
   }
 
@@ -127,7 +132,6 @@
     const path = window.location.pathname;
 
     if (path.endsWith('.md') || path.endsWith('.markdown')) return true;
-
     if (url.includes('/raw/') && (path.includes('.md') || path.includes('.markdown'))) return true;
 
     if (url.includes('/blob/')) {
@@ -138,6 +142,101 @@
     }
 
     return false;
+  }
+
+  // ========== 独立文件格式检测 ==========
+  // 通过渲染器注册表中的 filePattern 匹配当前 URL
+  let _standaloneRenderer = null;
+  function detectStandaloneFormat() {
+    if (_standaloneRenderer) return _standaloneRenderer;
+    _standaloneRenderer = AINoteRenderers.getForFile(window.location.pathname);
+    return _standaloneRenderer;
+  }
+
+  function getStandaloneContent() {
+    const preEl = document.querySelector('pre');
+    if (preEl) return preEl.textContent || '';
+    return document.body.innerText || '';
+  }
+
+  // ========== 独立文件格式渲染 ==========
+  async function renderStandaloneFormat() {
+    if (isRendered) return;
+    const renderer = detectStandaloneFormat();
+    if (!renderer) return;
+
+    const rawContent = getStandaloneContent();
+    if (!rawContent) return;
+
+    originalContent = document.body.innerHTML;
+
+    // 显示加载提示
+    document.body.innerHTML = `
+      <div id="ainote-loading" style="
+        display: flex; justify-content: center; align-items: center;
+        height: 100vh; font-family: sans-serif; color: #666;
+      ">📦 AINote 正在渲染 ${renderer.name}...</div>
+    `;
+
+    try {
+      // 加载渲染器依赖
+      const ctx = createRenderContext();
+      const deps = renderer.dependencies || [];
+      const cssDeps = renderer.cssDependencies || [];
+
+      // 并行加载 CSS 和 JS
+      await Promise.all(cssDeps.map(href =>
+        loadCSS(href).catch(e => console.warn('CSS 加载失败:', href, e))
+      ));
+      await Promise.all(deps.map(src =>
+        loadScript(src).catch(e => console.warn('JS 加载失败:', src, e))
+      ));
+
+      // 调用渲染器的 renderStandalone 方法
+      if (typeof renderer.renderStandalone === 'function') {
+        await renderer.renderStandalone(rawContent, ctx);
+      } else {
+        throw new Error('渲染器缺少 renderStandalone 方法');
+      }
+
+      isRendered = true;
+      updateToolbarState();
+
+    } catch (err) {
+      console.error('AINote 独立格式渲染失败:', err);
+      document.body.innerHTML = originalContent || '';
+      alert(`AINote 渲染失败: ${err.message}`);
+    }
+  }
+
+  // ========== 独立文件格式工具栏 ==========
+  function addStandaloneToolbar() {
+    if (document.getElementById('ainote-toolbar')) return;
+
+    const renderer = detectStandaloneFormat();
+    const name = renderer ? renderer.name : '文件';
+
+    const bar = document.createElement('div');
+    bar.id = 'ainote-toolbar';
+    bar.style.cssText = 'position:fixed;bottom:20px;right:20px;display:flex;gap:8px;z-index:999999;';
+
+    function mkBtn(id, text, color, onClick) {
+      const btn = document.createElement('button');
+      btn.id = id;
+      btn.textContent = text;
+      btn.style.cssText = `padding:8px 16px;border:none;border-radius:6px;background:${color};color:#fff;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);white-space:nowrap;`;
+      btn.addEventListener('click', onClick);
+      return btn;
+    }
+
+    const btnRender = mkBtn('ainote-btn-render', '📦 渲染 ' + name, '#1a73e8', () => renderStandaloneFormat());
+    const btnReset  = mkBtn('ainote-btn-reset', '🔙 恢复', '#ea4335', () => resetPage());
+
+    bar.appendChild(btnRender);
+    bar.appendChild(btnReset);
+    document.body.appendChild(bar);
+
+    setButtonVisible('ainote-btn-reset', false);
   }
 
   // ========== drawio 文件检测 ==========
@@ -177,17 +276,14 @@
   // ========== 动态加载资源 ==========
   // CDN URL → 本地文件路径映射
   const CDN_MAPPINGS = [
-    // 主库
     [/markdown-it@[\d.]+.*markdown-it\.min\.js/, 'markdown-it.min.js'],
     [/mermaid@[\d.]+.*mermaid\.min\.js/, 'mermaid.min.js'],
     [/katex@[\d.]+.*katex\.min\.js/, 'katex.min.js'],
     [/katex@[\d.]+.*katex\.min\.css/, 'katex.min.css'],
     [/pako@[\d.]+.*pako\.min\.js/, 'pako.min.js'],
-    // Viz.js
     [/viz\.js@[\d.]+.*\/viz\.js/, 'viz.min.js'],
     [/viz\.js@[\d.]+.*lite\.render\.js/, 'full.render.min.js'],
     [/viz\.js@[\d.]+.*full\.render\.min\.js/, 'full.render.min.js'],
-    // highlight.js
     [/highlight\.js@[\d.]+.*\/lib\/core\.min\.js/, 'highlight.min.js'],
     [/highlight\.js@[\d.]+.*\/lib\/languages\/(\w+)\.min\.js/, 'languages/$1.min.js'],
     [/highlight\.js@[\d.]+.*\/styles\/([\w-]+)\.min\.css/, 'styles/$1.min.css'],
@@ -209,9 +305,6 @@
     return chrome.runtime.getURL(getLocalFileName(src));
   }
 
-  // 通过动态 import() 将 JS 库加载到 ISOLATED world
-  // Content scripts 在 MV3 中可以通过 import() 加载 chrome-extension:// URL
-  // 部分库（如 mermaid 的 esbuild 产物）在 ESM 上下文会失败，改为间接 eval 执行
   async function loadScript(src) {
     const localFile = getLocalFileName(src);
     if (localFile && typeof chrome !== 'undefined') {
@@ -222,7 +315,6 @@
       } catch (e) {
         console.warn('AINote import() 失败，改用间接 eval:', localFile);
       }
-      // 间接 eval 在全局作用域执行，var 声明的变量会正确设为 window 属性
       try {
         const resp = await fetch(url);
         const code = await resp.text();
@@ -232,7 +324,6 @@
         console.warn('AINote eval 也失败，降级到 DOM 加载:', localFile, e2);
       }
     }
-    // 最终降级：通过 DOM <script> 标签加载（MAIN world）
     const url = getLocalUrl(src);
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
@@ -243,7 +334,6 @@
     });
   }
 
-  // CSS 通过 DOM <link> 加载（无 isolated world 问题）
   function loadCSS(href) {
     return new Promise((resolve, reject) => {
       const link = document.createElement('link');
@@ -255,7 +345,7 @@
     });
   }
 
-  // ========== 渲染错误提示 ==========
+  // ========== 渲染错误提示（供渲染器插件使用） ==========
   function showRenderError(pre, langClass, errorMsg) {
     const code = pre.querySelector('code')?.textContent || '';
     const isDark = settings.theme === 'dark';
@@ -306,467 +396,34 @@
     pre.parentNode.replaceChild(wrapper, pre);
   }
 
-  // ========== 渲染 Mermaid 图表 ==========
-  async function renderMermaidBlocks(container) {
-    if (typeof mermaid === 'undefined') return;
-
-    const mermaidBlocks = container.querySelectorAll('code.language-mermaid');
-    if (mermaidBlocks.length === 0) return;
-
-    const theme = settings.theme === 'dark' ? 'dark' : 'default';
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: theme,
-      securityLevel: 'loose'
-    });
-
-    let index = 0;
-    for (const block of mermaidBlocks) {
-      const pre = block.closest('pre');
-      if (!pre) continue;
-
-      const code = block.textContent;
-      const id = `ainote-mermaid-${index++}`;
-
-      try {
-        const { svg } = await mermaid.render(id, code);
-        const wrapper = document.createElement('div');
-        wrapper.className = 'mermaid-chart';
-        wrapper.innerHTML = svg;
-        pre.parentNode.replaceChild(wrapper, pre);
-      } catch (err) {
-        showRenderError(pre, 'Mermaid', err.message || String(err));
+  // ========== 构建渲染上下文 ==========
+  function createRenderContext() {
+    return {
+      settings: settings,
+      escapeHtml: escapeHtml,
+      loadScript: loadScript,
+      loadCSS: loadCSS,
+      getLocalUrl: getLocalUrl,
+      getPlantUmlServerList: getPlantUmlServerList,
+      showError: function(pre, langClass, errorMsg) {
+        showRenderError(pre, langClass, errorMsg);
       }
-    }
+    };
   }
 
-  // ========== PlantUML 降级显示 ==========
-  function showPlantUmlFallback(pre, code, errorMsg) {
-    showRenderError(pre, 'PlantUML', errorMsg);
-  }
-
-  // ========== PlantUML 编码（用于生成图片 URL） ==========
-  // 确保 pako 库只加载一次
-  let pakoLoadPromise = null;
-  async function ensurePako() {
-    if (typeof pako !== 'undefined') return;
-    if (pakoLoadPromise) return pakoLoadPromise;
-    pakoLoadPromise = loadScript('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js');
-    return pakoLoadPromise;
-  }
-
-  // Uint8Array 转标准 Base64（安全的分块方式，避免栈溢出）
-  function uint8ToBase64(bytes) {
-    let binary = '';
-    const chunk = 8192;
-    for (let i = 0; i < bytes.length; i += chunk) {
-      const slice = bytes.subarray(i, Math.min(i + chunk, bytes.length));
-      binary += String.fromCharCode.apply(null, slice);
-    }
-    return btoa(binary);
-  }
-
-  // 标准 Base64 字符 → PlantUML 自定义字母表
-  const PLANTUML_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
-  const STANDARD_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-  async function plantUmlEncode(text) {
-    // 1. UTF-8 编码（使用浏览器原生 TextEncoder，正确处理所有 Unicode 字符）
-    const utf8Bytes = new TextEncoder().encode(text);
-
-    // 2. Deflate 压缩（优先使用 pako，失败则使用未压缩原文）
-    let compressed;
-    if (typeof pako !== 'undefined') {
-      try {
-        compressed = pako.deflateRaw(utf8Bytes, { level: 9 });
-      } catch (e) {
-        console.warn('AINote PlantUML deflate 失败，使用未压缩文本:', e);
-        compressed = utf8Bytes;
-      }
-    } else {
-      // pako 未加载，使用未压缩原文（PlantUML 服务器也支持）
-      compressed = utf8Bytes;
-    }
-
-    // 3. 转成标准 Base64
-    const standardBase64 = uint8ToBase64(compressed);
-
-    // 4. 映射到 PlantUML 自定义字母表（跳过 = 填充符）
-    let plantUml = '';
-    for (const c of standardBase64) {
-      if (c === '=') continue;
-      const idx = STANDARD_ALPHABET.indexOf(c);
-      if (idx !== -1) {
-        plantUml += PLANTUML_ALPHABET[idx];
-      }
-    }
-
-    // 5. URL 长度检查（PlantUML 服务器建议不超过 ~8000 字符）
-    const fullUrl = `https://www.plantuml.com/plantuml/svg/${plantUml}`;
-    if (fullUrl.length > 8000) {
-      console.warn(
-        `AINote PlantUML: URL 长度 ${fullUrl.length} 超过建议值 8000，` +
-        '图表可能显示失败。建议拆分较大的 PlantUML 图。'
-      );
-    }
-
-    return plantUml;
-  }
-
-  // ========== 渲染 PlantUML 图表 ==========
-  async function renderPlantUMLBlocks(container) {
-    const plantUmlBlocks = container.querySelectorAll('code.language-plantuml, code.language-uml');
-    if (plantUmlBlocks.length === 0) return;
-
-    await ensurePako();
-
-    for (const block of plantUmlBlocks) {
-      const pre = block.closest('pre');
-      if (!pre) continue;
-
-      const code = block.textContent;
-      let encoded;
-      try {
-        encoded = plantUmlEncode(code);
-      } catch (e) {
-        console.warn('AINote PlantUML 编码失败:', e);
-        showPlantUmlFallback(pre, code, '编码失败: ' + e.message);
-        continue;
-      }
-
-      // 构建待尝试的服务器 URL 列表
-      const serverList = getPlantUmlServerList();
-      const imgUrls = serverList.map(s => `${s}/svg/${encoded}`);
-
-      // URL 过长，直接降级显示原始代码，不发起网络请求
-      const firstUrl = imgUrls[0] || `https://www.plantuml.com/plantuml/svg/${encoded}`;
-      if (firstUrl.length > 8000) {
-        showPlantUmlFallback(pre, code, `图表过大（URL ${firstUrl.length} 字符），请拆分后重试`);
-        continue;
-      }
-
-      // 多服务器 fallback 加载 PlantUML 图片
-      await loadPlantUmlWithFallback(pre, code, imgUrls);
-    }
-  }
-
-  // 多服务器 fallback：依次尝试，直到成功
-  async function loadPlantUmlWithFallback(pre, code, imgUrls) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'plantuml-chart';
-    wrapper.style.cssText = 'text-align: center; margin: 16px 0; padding: 16px; border-radius: 8px;';
-
-    if (settings.theme === 'dark') {
-      wrapper.style.background = '#161b22';
-      wrapper.style.color = '#c9d1d9';
-    } else {
-      wrapper.style.background = '#f6f8fa';
-      wrapper.style.color = '#24292e';
-    }
-
-    // 先显示加载提示
-    wrapper.innerHTML = '<div style="font-size:12px;color:#888;">⏳ PlantUML 加载中...</div>';
-
-    // 如果 pre 还在 DOM 中，替换它
-    if (pre && pre.parentNode) {
-      pre.parentNode.replaceChild(wrapper, pre);
-    }
-
-    // 依次尝试每个服务器
-    for (let i = 0; i < imgUrls.length; i++) {
-      const url = imgUrls[i];
-      try {
-        // 用 fetch 探测（带超时），避免 img.onerror 无法区分哪台服务器
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-
-        const resp = await fetch(url, {
-          method: 'GET',
-          mode: 'cors',
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-
-        if (!resp.ok) continue;
-
-        const svgText = await resp.text();
-        if (!svgText || !svgText.includes('<svg')) continue;
-
-        // 成功，渲染 SVG
-        wrapper.innerHTML = svgText;
-        const svgEl = wrapper.querySelector('svg');
-        if (svgEl) {
-          svgEl.style.maxWidth = '100%';
-          svgEl.style.height = 'auto';
-        }
-        return; // 成功，退出
-      } catch (e) {
-        console.warn(`AINote PlantUML 服务器 ${url} 失败:`, e.message);
-        // 尝试下一个服务器
-      }
-    }
-
-    // 所有服务器都失败，显示降级内容
-    const isDark = settings.theme === 'dark';
-    wrapper.innerHTML = `
-      <div style="
-        background: #d73a49;
-        color: #fff;
-        padding: 8px 16px;
-        font-size: 13px;
-        font-weight: 600;
-        border-radius: 8px 8px 0 0;
-        margin: -16px -16px 0 -16px;
-      ">⚠️ PlantUML 渲染失败</div>
-      <div style="
-        padding: 12px 0 0 0;
-        font-size: 13px;
-        color: ${isDark ? '#e1e4e8' : '#24292f'};
-      ">
-        <div style="margin-bottom: 12px; word-break: break-word;">
-          <strong>错误原因：</strong><span style="color:#d73a49;">所有 PlantUML 服务器均不可达</span>
-        </div>
-        <details style="cursor: pointer;">
-          <summary style="color: ${isDark ? '#8b949e' : '#586069'}; margin-bottom: 8px; user-select: none;">
-            查看原始代码
-          </summary>
-          <pre style="
-            background: ${isDark ? '#0d1117' : '#f6f8fa'};
-            padding: 12px;
-            border-radius: 6px;
-            overflow: auto;
-            max-height: 300px;
-            margin: 0;
-          "><code>${escapeHtml(code)}</code></pre>
-        </details>
-      </div>
-    `;
-    // 尝试语法高亮
-    if (typeof hljs !== 'undefined') {
-      const codeEl = wrapper.querySelector('code');
-      if (codeEl) { try { hljs.highlightElement(codeEl); } catch (e) {} }
-    }
-  }
-
-  // ========== 渲染 Graphviz/DOT 图表 ==========
-  async function renderGraphvizBlocks(container) {
-    const dotBlocks = container.querySelectorAll('code.language-dot, code.language-graphviz');
-    if (dotBlocks.length === 0) return;
-
-    // 动态加载 Viz.js
-    if (typeof Viz === 'undefined') {
-      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@2.1.2/viz.js');
-      await loadScript('https://cdn.jsdelivr.net/npm/viz.js@2.1.2/lite.render.js');
-    }
-
-    if (typeof Viz === 'undefined') return;
-
-    const viz = new Viz();
-    let index = 0;
-
-    for (const block of dotBlocks) {
-      const pre = block.closest('pre');
-      if (!pre) continue;
-
-      const code = block.textContent;
-
-      try {
-        const svg = await viz.renderSVGElement(code);
-        const wrapper = document.createElement('div');
-        wrapper.className = 'graphviz-chart';
-        wrapper.style.cssText = 'text-align: center; margin: 16px 0;';
-        wrapper.appendChild(svg);
-        pre.parentNode.replaceChild(wrapper, pre);
-      } catch (err) {
-        showRenderError(pre, 'Graphviz', err.message || String(err));
-      }
-
-      index++;
-    }
-  }
-
-  // ========== 渲染 D2 图表 ==========
-  async function renderD2Blocks(container) {
-    const d2Blocks = container.querySelectorAll('code.language-d2');
-    if (d2Blocks.length === 0) return;
-
-    // D2 使用官方服务器渲染
-    let index = 0;
-    for (const block of d2Blocks) {
-      const pre = block.closest('pre');
-      if (!pre) continue;
-
-      const code = block.textContent;
-
-      try {
-        // 使用 D2 官方 API（需要网络请求）
-        const response = await fetch('https://d2lang.com/api/render', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: code, format: 'svg' })
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const wrapper = document.createElement('div');
-          wrapper.className = 'd2-chart';
-          wrapper.style.cssText = 'text-align: center; margin: 16px 0;';
-          wrapper.innerHTML = result.svg;
-          pre.parentNode.replaceChild(wrapper, pre);
-        } else {
-          showRenderError(pre, 'D2', `HTTP ${response.status}`);
-        }
-      } catch (err) {
-        showRenderError(pre, 'D2', err.message || String(err));
-      }
-
-      index++;
-    }
-  }
-
-  // ========== 确保 SVG 正常显示 ==========
+  // ========== SVG 显示修复 ==========
   function fixSvgDisplay(container) {
     const svgs = container.querySelectorAll('svg');
     svgs.forEach(svg => {
-      // 确保 SVG 有合适的样式
       if (!svg.hasAttribute('width') && !svg.style.width) {
         svg.style.maxWidth = '100%';
         svg.style.height = 'auto';
       }
-      // 移除可能影响显示的内联样式
       svg.removeAttribute('height');
     });
   }
 
-  // ========== 渲染 KaTeX 公式（简化版，避免正则问题） ==========
-  function renderMath(container) {
-    if (typeof katex === 'undefined') return;
-
-    // 找到所有文本节点，使用更安全的方法
-    const walker = document.createTreeWalker(
-      container,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: function(node) {
-          const parent = node.parentNode;
-          if (parent.classList) {
-            if (parent.classList.contains('katex') ||
-                parent.classList.contains('katex-display') ||
-                parent.tagName === 'CODE' ||
-                parent.tagName === 'PRE') {
-              return NodeFilter.FILTER_REJECT;
-            }
-          }
-          return NodeFilter.FILTER_ACCEPT;
-        }
-      }
-    );
-
-    const textNodes = [];
-    let node;
-    while (node = walker.nextNode()) {
-      if (node.nodeValue.includes('$')) {
-        textNodes.push(node);
-      }
-    }
-
-    // 逆序遍历，避免节点替换时影响遍历
-    for (let i = textNodes.length - 1; i >= 0; i--) {
-      const textNode = textNodes[i];
-      const parent = textNode.parentNode;
-      const text = textNode.nodeValue;
-
-      // 简单的公式检测：找到 $...$ 或 $$...$$
-      // 先处理块级公式 $$...$$
-      let newHTML = text;
-
-      // 块级公式 $$...$$ (独占一行或前后有换行)
-      newHTML = newHTML.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-        try {
-          return '<span class="katex-formula">' +
-                 katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false }) +
-                 '</span>';
-        } catch (e) {
-          return match;
-        }
-      });
-
-      // 行内公式 $...$ (不包含换行，且前面不是 \)
-      // 使用更兼容的方法：不匹配 \$
-      const inlineFormulaRegex = /(^|[^\\])\$([^\$\n]+?)\$/g;
-      newHTML = newHTML.replace(inlineFormulaRegex, (match, prefix, formula) => {
-        try {
-          return prefix + '<span class="katex-formula-inline">' +
-                 katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false }) +
-                 '</span>';
-        } catch (e) {
-          return match;
-        }
-      });
-
-      // 恢复 \$ 为 $
-      newHTML = newHTML.replace(/\\\$/g, '$');
-
-      if (newHTML !== text) {
-        const temp = document.createElement('span');
-        temp.innerHTML = newHTML;
-        parent.replaceChild(temp, textNode);
-      }
-    }
-  }
-
-  // ========== 代码高亮 (Highlight.js) ==========
-  let hljsLoaded = false;
-  let currentHljsTheme = null;
-
-  async function loadHighlightJS(theme) {
-    const themeName = theme === 'dark' ? 'github-dark' : 'github';
-
-    if (!hljsLoaded) {
-      // 加载已打包常用语言的高亮库（cdnjs 版内含 30+ 种语言）
-      await loadScript('https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js');
-      hljsLoaded = true;
-    }
-
-    // 加载或切换主题 CSS
-    if (!currentHljsTheme || currentHljsTheme !== themeName) {
-      // 移除旧的主题 CSS
-      const oldLinks = document.querySelectorAll('link[data-hljs-theme]');
-      oldLinks.forEach(link => link.remove());
-
-      // 加载新主题
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = getLocalUrl(`https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/${themeName}.min.css`);
-      link.setAttribute('data-hljs-theme', themeName);
-      document.head.appendChild(link);
-
-      currentHljsTheme = themeName;
-    }
-  }
-
-  async function highlightCodeBlocks(container) {
-    const theme = settings.theme === 'dark' ? 'dark' : 'light';
-    await loadHighlightJS(theme);
-
-    if (typeof hljs === 'undefined') return;
-
-    const codeBlocks = container.querySelectorAll('pre code');
-    codeBlocks.forEach((block) => {
-      // 跳过 mermaid 代码块
-      if (block.classList.contains('language-mermaid')) return;
-      // 跳过已高亮的
-      if (block.classList.contains('hljs')) return;
-
-      try {
-        hljs.highlightElement(block);
-      } catch (e) {
-        // ignore
-      }
-    });
-  }
-
-  // ========== 主渲染函数 ==========
+  // ========== 主渲染函数（编排器入口）==========
   async function renderMarkdown() {
     if (isRendered) return;
 
@@ -785,27 +442,15 @@
         height: 100vh;
         font-family: sans-serif;
         color: #666;
-      ">
-        📝 AINote 正在渲染...
-      </div>
+      ">📝 AINote 正在渲染...</div>
     `;
 
     try {
-      // 动态加载依赖
-      const loaders = [];
+      // 加载 markdown-it（基础库，所有 MD 渲染都需要）
       if (typeof markdownit === 'undefined') {
-        loaders.push(loadScript('https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js'));
+        await loadScript('https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js');
       }
-      if (typeof mermaid === 'undefined') {
-        loaders.push(loadScript('https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js'));
-      }
-      if (typeof katex === 'undefined') {
-        loaders.push(loadCSS('https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css'));
-        loaders.push(loadScript('https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js'));
-      }
-      await Promise.all(loaders);
 
-      // 初始化 markdown-it
       const md = window.markdownit({
         html: true,
         linkify: true,
@@ -813,15 +458,12 @@
         breaks: true
       });
 
-      // 渲染 Markdown
       const html = md.render(mdText);
 
-      // 确定主题
       const theme = settings.theme === 'auto'
         ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
         : settings.theme;
 
-      // 创建渲染容器
       const container = document.createElement('div');
       container.id = 'ainote-rendered';
       container.className = `ainote-theme-${theme}`;
@@ -834,33 +476,25 @@
       `;
       container.innerHTML = html;
 
-      // 替换 body 内容
       document.body.innerHTML = '';
       document.body.appendChild(container);
 
-      // 渲染 Mermaid 图表
-      await renderMermaidBlocks(container);
+      // ===== 关键变更：使用管道执行所有渲染器 =====
+      // 替代原来逐个调用 renderMermaidBlocks / renderPlantUMLBlocks / ...
+      const renderCtx = createRenderContext();
+      const result = await AINotePipeline.run(container, renderCtx);
 
-      // 渲染 PlantUML 图表
-      await renderPlantUMLBlocks(container);
-
-      // 渲染 Graphviz/DOT 图表
-      await renderGraphvizBlocks(container);
-
-      // 渲染 D2 图表
-      await renderD2Blocks(container);
-
-      // 渲染 KaTeX 公式
-      renderMath(container);
-
-      // 代码高亮
-      await highlightCodeBlocks(container);
-
-      // 确保 SVG 正常显示
+      // 补充 SVG 修复
       fixSvgDisplay(container);
 
       isRendered = true;
       updateToolbarState();
+
+      // 日志：打印渲染结果（可选，帮助调试）
+      if (result.failed.length > 0) {
+        console.warn('[AINote] 部分渲染器失败:', result.failed.join(', '));
+      }
+      console.log('[AINote] 渲染完成，成功:', result.success.join(', '));
 
     } catch (err) {
       console.error('AINote 渲染失败:', err);
@@ -881,21 +515,28 @@
     container.className = `ainote-theme-${theme}`;
     container.style.fontSize = settings.fontSize + 'px';
 
-    // 重新高亮代码（切换主题）
-    if (isRendered && typeof hljs !== 'undefined') {
-      loadHighlightJS(theme).then(() => {
-        const codeBlocks = container.querySelectorAll('pre code');
-        codeBlocks.forEach((block) => {
-          if (block.classList.contains('language-mermaid')) return;
-          // 移除旧的 hljs 类，重新高亮
-          block.classList.remove('hljs', 'hljs-*');
-          try {
-            hljs.highlightElement(block);
-          } catch (e) {
-            // ignore
-          }
+    // 重新渲染代码高亮（主题切换时）-- 通过管道重新运行 hljs 渲染器
+    if (isRendered) {
+      // 清除旧的 hljs 类，以便重新高亮（新主题色）
+      var oldBlocks = container.querySelectorAll('pre code.hljs');
+      for (var i = 0; i < oldBlocks.length; i++) {
+        oldBlocks[i].classList.remove('hljs');
+      }
+
+      const renderCtx = createRenderContext();
+      var hljsRenderer = null;
+      var allRenderers = AINoteRenderers.getAll();
+      for (var r = 0; r < allRenderers.length; r++) {
+        if (allRenderers[r].id === 'hljs') {
+          hljsRenderer = allRenderers[r];
+          break;
+        }
+      }
+      if (hljsRenderer && hljsRenderer.detect(container)) {
+        hljsRenderer.render(container, renderCtx).catch(function(e) {
+          console.warn('[AINote] 主题切换时高亮失败:', e);
         });
-      });
+      }
     }
   }
 
@@ -910,11 +551,9 @@
   }
 
   // ========== 渲染 drawio 文件 ==========
-  // 使用 embed.diagrams.net postMessage API 加载图表，避免 URL 编码问题
   async function renderDrawio() {
     if (isRendered) return;
 
-    // 获取 XML 内容
     let xml = '';
     const preEl = document.querySelector('pre');
     if (preEl) {
@@ -927,7 +566,6 @@
 
     originalContent = document.body.innerHTML;
 
-    // 显示加载提示
     document.body.innerHTML = `
       <div id="ainote-drawio-loading" style="
         display: flex;
@@ -940,13 +578,11 @@
     `;
 
     try {
-      // 创建全屏 iframe，使用 embed.diagrams.net 的 embed 模式
       const iframe = document.createElement('iframe');
       iframe.src = 'https://embed.diagrams.net/?embed=1&ui=kennedy&spin=1&proto=json';
       iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:999998;';
       iframe.setAttribute('allowfullscreen', '');
 
-      // 监听 iframe 加载完成后通过 postMessage 发送 XML 数据
       const onMessage = (event) => {
         if (event.origin !== 'https://embed.diagrams.net') return;
         if (event.data === 'ready' || (typeof event.data === 'string' && event.data.includes('ready'))) {
@@ -959,7 +595,6 @@
       };
       window.addEventListener('message', onMessage);
 
-      // 安全超时：3 秒后直接 postMessage（以防 ready 事件未触发）
       const fallbackTimer = setTimeout(() => {
         iframe.contentWindow.postMessage(JSON.stringify({
           action: 'load',
@@ -968,7 +603,6 @@
         }), 'https://embed.diagrams.net');
       }, 3000);
 
-      // 清理函数
       iframe._ainoteCleanup = () => {
         clearTimeout(fallbackTimer);
         window.removeEventListener('message', onMessage);
@@ -980,7 +614,6 @@
       document.body.style.overflow = 'hidden';
       document.body.appendChild(iframe);
 
-      // 4 秒后标记渲染完成并显示工具栏
       setTimeout(() => {
         isRendered = true;
         addDrawioToolbar();
@@ -1020,7 +653,6 @@
       return;
     }
 
-    // 添加打印样式
     const style = document.createElement('style');
     style.id = 'ainote-print-style';
     style.textContent = `
@@ -1037,7 +669,6 @@
 
     window.print();
 
-    // 打印后移除样式
     setTimeout(() => {
       const printStyle = document.getElementById('ainote-print-style');
       if (printStyle) printStyle.remove();
@@ -1059,7 +690,6 @@
       exitEditorMode();
     }
 
-    // 保存设置
     if (typeof chrome !== 'undefined' && chrome.storage) {
       chrome.storage.sync.set({ editorMode: settings.editorMode });
     }
@@ -1069,7 +699,6 @@
     const container = document.getElementById('ainote-rendered');
     if (!container) return;
 
-    // 创建编辑器布局
     const wrapper = document.createElement('div');
     wrapper.id = 'ainote-editor-wrapper';
     wrapper.style.cssText = `
@@ -1080,13 +709,9 @@
       padding: 20px;
     `;
 
-    // 编辑器面板
     const editorPanel = document.createElement('div');
     editorPanel.id = 'ainote-editor-panel';
-    editorPanel.style.cssText = `
-      flex: 1;
-      min-width: 0;
-    `;
+    editorPanel.style.cssText = 'flex:1;min-width:0;';
 
     const textarea = document.createElement('textarea');
     textarea.id = 'ainote-editor-textarea';
@@ -1108,7 +733,6 @@
       textarea.style.borderColor = '#30363d';
     }
 
-    // 实时预览
     let previewTimer = null;
     textarea.addEventListener('input', () => {
       clearTimeout(previewTimer);
@@ -1120,7 +744,6 @@
 
     editorPanel.appendChild(textarea);
 
-    // 预览面板
     const previewPanel = document.createElement('div');
     previewPanel.id = 'ainote-preview-panel';
     previewPanel.style.cssText = `
@@ -1133,21 +756,18 @@
     wrapper.appendChild(editorPanel);
     wrapper.appendChild(previewPanel);
 
-    // 替换容器内容
     container.parentNode.replaceChild(wrapper, container);
 
-    // 初始预览
     updatePreview(currentMarkdownText);
   }
 
   function exitEditorMode() {
     const wrapper = document.getElementById('ainote-editor-wrapper');
     if (!wrapper) return;
-
-    // 重新渲染完整页面
     renderMarkdown();
   }
 
+  // ===== 编辑器预览（使用管道）=====
   async function updatePreview(mdText) {
     if (typeof markdownit === 'undefined') return;
 
@@ -1164,36 +784,9 @@
     const html = md.render(mdText);
     previewPanel.innerHTML = html;
 
-    // 高亮代码
-    if (typeof hljs !== 'undefined') {
-      const codeBlocks = previewPanel.querySelectorAll('pre code');
-      codeBlocks.forEach((block) => {
-        if (block.classList.contains('language-mermaid')) return;
-        try {
-          hljs.highlightElement(block);
-        } catch (e) {
-          // ignore
-        }
-      });
-    }
-
-    // 渲染 Mermaid
-    await renderMermaidBlocks(previewPanel);
-
-    // 渲染 PlantUML
-    await renderPlantUMLBlocks(previewPanel);
-
-    // 渲染 Graphviz/DOT
-    await renderGraphvizBlocks(previewPanel);
-
-    // 渲染 D2
-    await renderD2Blocks(previewPanel);
-
-    // 渲染公式
-    renderMath(previewPanel);
-
-    // 确保 SVG 正常显示
-    fixSvgDisplay(previewPanel);
+    // ===== 关键变更：使用管道执行所有渲染器 =====
+    const renderCtx = createRenderContext();
+    await AINotePipeline.run(previewPanel, renderCtx);
   }
 
   // ========== 底部工具栏 ==========
@@ -1243,23 +836,22 @@
 
   // ========== 键盘快捷键 ==========
   document.addEventListener('keydown', (e) => {
-    // Ctrl+Shift+R: 渲染/重置
     if (e.ctrlKey && e.shiftKey && e.key === 'R') {
       e.preventDefault();
       if (isRendered) {
         resetPage();
+      } else if (detectStandaloneFormat()) {
+        renderStandaloneFormat();
       } else {
         renderMarkdown();
       }
     }
 
-    // Ctrl+Shift+E: 切换编辑器模式
     if (e.ctrlKey && e.shiftKey && e.key === 'E') {
       e.preventDefault();
       toggleEditorMode();
     }
 
-    // Ctrl+Shift+D: 导出 PDF
     if (e.ctrlKey && e.shiftKey && e.key === 'D') {
       e.preventDefault();
       exportToPDF();
@@ -1271,9 +863,11 @@
     document.addEventListener('DOMContentLoaded', () => {
       if (isMdFile()) addToolbar();
       else if (isDrawioFile()) renderDrawio();
+      else if (detectStandaloneFormat()) addStandaloneToolbar();
     });
   } else {
     if (isMdFile()) addToolbar();
     else if (isDrawioFile()) renderDrawio();
+    else if (detectStandaloneFormat()) addStandaloneToolbar();
   }
 })();

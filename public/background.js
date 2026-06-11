@@ -3,7 +3,18 @@
 // 右键菜单 URL 模式
 const MD_PATTERNS = ['*://*/*.md', '*://*/*.markdown', '*://*/*blob/*', '*://*/*raw/*'];
 const DRAWIO_PATTERNS = ['*://*/*.drawio', '*://*/*.dio', '*://*/*.drawio/*raw*', '*://*/*.dio/*raw*'];
-const ALL_PATTERNS = [...MD_PATTERNS, ...DRAWIO_PATTERNS];
+// 新增独立文件格式
+const STANDALONE_PATTERNS = [
+  '*://*/*.ipynb', '*://*/*.ipynb/*raw*',
+  '*://*/*.csv', '*://*/*.csv/*raw*',
+  '*://*/*.tsv', '*://*/*.tsv/*raw*',
+  '*://*/*.geojson', '*://*/*.geojson/*raw*',
+  '*://*/*.topojson', '*://*/*.topojson/*raw*',
+  '*://*/*.adoc', '*://*/*.adoc/*raw*',
+  '*://*/*.asciidoc', '*://*/*.asciidoc/*raw*',
+  '*://*/*.json', '*://*/*.json/*raw*'
+];
+const ALL_PATTERNS = [...MD_PATTERNS, ...DRAWIO_PATTERNS, ...STANDALONE_PATTERNS];
 
 // 插件安装时初始化默认设置
 chrome.runtime.onInstalled.addListener((details) => {

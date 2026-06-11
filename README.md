@@ -1,6 +1,6 @@
 # AINote — AI 输出 Markdown 增强阅读器
 
-> 让 AI 生成的 Markdown 文档（含各种图表、公式、代码）在浏览器中完美渲染。同时支持 `.drawio` 文件的在线查看。
+> 让 AI 生成的 Markdown 文档（含各种图表、公式、代码）在浏览器中完美渲染。同时支持 `.drawio` / `.ipynb` / `.csv` / `.geojson` / `.adoc` / `.json` 等文件的在线查看。
 
 [![GitHub](https://img.shields.io/badge/GitHub-openpeng/ainote-blue?logo=github)](https://github.com/openpeng/ainote)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
@@ -20,6 +20,9 @@ AINote 是一个浏览器扩展 + Web 阅读器，专门解决 **AI 输出的 Ma
 | **PlantUML** | PlantUML Server | 架构图、组件图、状态图（多服务器 fallback） |
 | **Graphviz / DOT** | viz.js | 有向图、依赖图 |
 | **D2** | D2 API | 现代架构图、数据流图 |
+| **WaveDrom** | WaveDrom | 数字时序图、波形图 |
+| **Nomnoml** | nomnoml | 简洁 UML 类图、关系图 |
+| **Vega** | Vega-Lite | 声明式数据可视化图表 |
 | **Draw.io** | diagrams.net Viewer | 直接查看 `.drawio` / `.dio` 文件 |
 
 ### 📐 数学公式
@@ -33,6 +36,16 @@ AINote 是一个浏览器扩展 + Web 阅读器，专门解决 **AI 输出的 Ma
 - 支持 190+ 语言
 - 多套主题可切换
 
+### 📄 支持的独立文件格式
+
+| 格式 | 说明 |
+|------|------|
+| **Jupyter Notebook** (`.ipynb`) | 在线渲染 Jupyter 笔记本 |
+| **CSV / TSV** (`.csv` `.tsv`) | 交互式表格浏览 |
+| **GeoJSON** (`.geojson` `.topojson`) | 地图数据可视化 |
+| **AsciiDoc** (`.adoc` `.asciidoc`) | 文档格式渲染 |
+| **JSON** (`.json`) | 格式化 JSON 查看器 |
+
 ### 📄 其他功能
 
 - �导出 PDF（保留样式）
@@ -40,7 +53,7 @@ AINote 是一个浏览器扩展 + Web 阅读器，专门解决 **AI 输出的 Ma
 - 🎭 多套主题（默认 / GitHub / VuePress / GitBook）
 - ⌨️ 键盘快捷键（`Ctrl+Shift+R` 渲染，`Ctrl+Shift+E` 编辑器，`Ctrl+Shift+D` 导出 PDF）
 - 🖱️ 右键菜单快捷操作
-- 🌐 自动检测 `.md` 文件（GitHub / GitLab 等）
+- 🌐 自动检测 `.md` / `.drawio` / `.ipynb` / `.csv` / `.geojson` / `.adoc` / `.json` 文件（GitHub / GitLab 等）
 
 ---
 
@@ -142,6 +155,23 @@ ainote/
 │   ├── content.js             # 内容脚本（核心渲染逻辑）
 │   ├── popup.html             # 弹出面板 UI
 │   ├── popup.js               # 弹出面板逻辑
+│   ├── renderers/             # 模块化渲染器
+│   │   ├── renderer-registry.js   # 渲染器注册中心
+│   │   ├── render-pipeline.js     # 渲染管线调度
+│   │   ├── renderer-mermaid.js    # Mermaid 图表
+│   │   ├── renderer-plantuml.js   # PlantUML 图表
+│   │   ├── renderer-graphviz.js   # Graphviz/DOT 图表
+│   │   ├── renderer-d2.js         # D2 图表
+│   │   ├── renderer-wavedrom.js   # WaveDrom 时序图
+│   │   ├── renderer-nomnoml.js    # Nomnoml UML 图
+│   │   ├── renderer-vega.js       # Vega 可视化
+│   │   ├── renderer-katex.js      # KaTeX 公式
+│   │   ├── renderer-hljs.js       # 代码高亮
+│   │   ├── renderer-ipynb.js      # Jupyter 笔记本
+│   │   ├── renderer-csv.js        # CSV/TSV 表格
+│   │   ├── renderer-geojson.js    # GeoJSON 地图
+│   │   ├── renderer-adoc.js       # AsciiDoc 文档
+│   │   └── renderer-json.js       # JSON 查看器
 │   ├── styles/
 │   │   ├── content.css        # 渲染样式
 │   │   └── popup.css          # 弹出面板样式
@@ -182,6 +212,9 @@ ainote/
 | UML 图 | [PlantUML](https://plantuml.com/)（pako 压缩 + 多服务器） |
 | 有向图 | [viz.js](https://github.com/mdaines/viz.js) |
 | 架构图 | [D2](https://d2lang.com/) |
+| 时序图 | [WaveDrom](https://wavedrom.com/) |
+| UML 类图 | [nomnoml](https://www.nomnoml.com/) |
+| 数据可视化 | [Vega-Lite](https://vega.github.io/vega-lite/) |
 | 公式渲染 | [KaTeX](https://katex.org/) |
 | 代码高亮 | [Highlight.js](https://highlightjs.org/) |
 | 扩展规范 | [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/) |
@@ -222,7 +255,7 @@ Manifest V3 的内容脚本运行在隔离世界 (isolated world) 中，无法�
 ## 🔮 路线图
 
 - [ ] 打包为 `.crx` / `.xpi` 正式发布
-- [ ] 支持更多图表格式（WaveDrom、Bytefield 等）
+- [ ] 支持更多图表格式（Bytefield、ECharts 等）
 - [ ] 可嵌入 SDK（`ainote.min.js`，一行代码集成到任意网页）
 - [ ] 暗黑模式
 - [ ] 离线模式（内置 PlantUML 渲染服务）
@@ -231,6 +264,19 @@ Manifest V3 的内容脚本运行在隔离世界 (isolated world) 中，无法�
 ---
 
 ## 📋 更新日志
+
+### v1.3.0 (2026-06)
+
+- 🔧 **模块化渲染架构**：重构 content.js 为 16 个独立渲染器模块，放在 `public/renderers/`
+- ✨ 新增 **WaveDrom** 数字时序图支持
+- ✨ 新增 **Nomnoml** 简洁 UML 类图支持
+- ✨ 新增 **Vega-Lite** 声明式数据可视化支持
+- ✨ 支持 **Jupyter Notebook** (`.ipynb`) 文件在线渲染
+- ✨ 支持 **CSV / TSV** (`.csv` `.tsv`) 交互式表格浏览
+- ✨ 支持 **GeoJSON** (`.geojson` `.topojson`) 地图数据可视化
+- ✨ 支持 **AsciiDoc** (`.adoc` `.asciidoc`) 文档格式渲染
+- ✨ 支持 **JSON** (`.json`) 格式化查看器
+- ✨ 右键菜单 / 自动检测扩展至 `.ipynb` / `.csv` / `.geojson` / `.adoc` / `.json`
 
 ### v1.5.0 (2026-06)
 
