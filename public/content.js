@@ -911,26 +911,21 @@
 
   // ========== drawio URL 编码 ==========
   function encodeDrawioUrl(xml) {
-    // 1. deflateRaw 压缩
     const compressed = typeof pako !== 'undefined'
       ? pako.deflateRaw(new TextEncoder().encode(xml))
       : null;
     if (!compressed) return '';
-    // 2. 转为单字节数组（pako.deflateRaw 返回 Uint8Array）
     const bytes = new Uint8Array(compressed);
-    // 3. 自定义 base64 编码
     const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
     let result = '';
-    let i = 0;
-    const len = bytes.length;
-    while (i < len) {
-      const a = bytes[i++];
-      const b = bytes[i++] || 0;
-      const c = bytes[i++] || 0;
+    for (let i = 0; i < bytes.length; i += 3) {
+      const a = bytes[i];
+      const b = (i + 1 < bytes.length) ? bytes[i + 1] : 0;
+      const c = (i + 2 < bytes.length) ? bytes[i + 2] : 0;
       result += alphabet[a >> 2];
       result += alphabet[((a & 3) << 4) | (b >> 4)];
-      if (i - 1 < len) result += alphabet[((b & 15) << 2) | (c >> 6)];
-      if (i - 2 < len) result += alphabet[c & 63];
+      result += (i + 1 < bytes.length) ? alphabet[((b & 15) << 2) | (c >> 6)] : '';
+      result += (i + 2 < bytes.length) ? alphabet[c & 63] : '';
     }
     return result;
   }
