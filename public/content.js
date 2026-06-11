@@ -909,31 +909,8 @@
     }
   }
 
-  // ========== drawio URL 编码 ==========
-  function encodeDrawioUrl(xml) {
-    // 1. URL 编码（与 draw.io 编码管线一致：encodeURIComponent → deflate → base64）
-    const encoded = encodeURIComponent(xml);
-    // 2. deflateRaw 压缩
-    const compressed = typeof pako !== 'undefined'
-      ? pako.deflateRaw(encoded)
-      : null;
-    if (!compressed) return '';
-    // 3. draw.io 自定义 base64 编码（基于 Uint8Array 索引）
-    const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
-    let result = '';
-    for (let i = 0; i < compressed.length; i += 3) {
-      const a = compressed[i];
-      const b = (i + 1 < compressed.length) ? compressed[i + 1] : NaN;
-      const c = (i + 2 < compressed.length) ? compressed[i + 2] : NaN;
-      result += alphabet[a >> 2];
-      result += alphabet[((a & 3) << 4) | (b >> 4)];
-      result += isNaN(b) ? '' : alphabet[((b & 15) << 2) | (c >> 6)];
-      result += isNaN(c) ? '' : alphabet[c & 63];
-    }
-    return result;
-  }
-
   // ========== 渲染 drawio 文件 ==========
+  // 使用 embed.diagrams.net postMessage API 加载图表，避免 URL 编码问题
   async function renderDrawio() {
     if (isRendered) return;
 
@@ -963,29 +940,51 @@
     `;
 
     try {
-      // 加载 pako（如果尚未加载）
-      if (typeof pako === 'undefined') {
-        await loadScript('https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js');
-      }
+      // 创建全屏 iframe，使用 embed.diagrams.net 的 embed 模式
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://embed.diagrams.net/?embed=1&ui=kennedy&spin=1&proto=json';
+      iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:999998;';
+      iframe.setAttribute('allowfullscreen', '');
 
-      const encoded = encodeDrawioUrl(xml);
-      if (!encoded) {
-        document.body.innerHTML = originalContent;
-        return;
-      }
+      // 监听 iframe 加载完成后通过 postMessage 发送 XML 数据
+      const onMessage = (event) => {
+        if (event.origin !== 'https://embed.diagrams.net') return;
+        if (event.data === 'ready' || (typeof event.data === 'string' && event.data.includes('ready'))) {
+          iframe.contentWindow.postMessage(JSON.stringify({
+            action: 'load',
+            autosave: 0,
+            xml: xml
+          }), 'https://embed.diagrams.net');
+        }
+      };
+      window.addEventListener('message', onMessage);
 
-      const viewerUrl = `https://viewer.diagrams.net/?lightbox=1&chrome=0&edit=_blank#R${encoded}`;
+      // 安全超时：3 秒后直接 postMessage（以防 ready 事件未触发）
+      const fallbackTimer = setTimeout(() => {
+        iframe.contentWindow.postMessage(JSON.stringify({
+          action: 'load',
+          autosave: 0,
+          xml: xml
+        }), 'https://embed.diagrams.net');
+      }, 3000);
 
-      // 替换 body 为全屏 iframe
+      // 清理函数
+      iframe._ainoteCleanup = () => {
+        clearTimeout(fallbackTimer);
+        window.removeEventListener('message', onMessage);
+      };
+
+      document.body.innerHTML = '';
       document.body.style.margin = '0';
       document.body.style.padding = '0';
       document.body.style.overflow = 'hidden';
-      document.body.innerHTML = `<iframe src="${viewerUrl}"
-        style="border:none;width:100vw;height:100vh;"
-        allowfullscreen></iframe>`;
+      document.body.appendChild(iframe);
 
-      isRendered = true;
-      addDrawioToolbar();
+      // 4 秒后标记渲染完成并显示工具栏
+      setTimeout(() => {
+        isRendered = true;
+        addDrawioToolbar();
+      }, 4000);
     } catch (err) {
       console.warn('AINote drawio 渲染失败:', err);
       document.body.innerHTML = originalContent;
