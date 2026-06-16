@@ -160,7 +160,52 @@ async function renderContent(text, fileName = '') {
   console.log('[AINote] 渲染完成，成功:', result.success.join(', '));
 }
 
-// ========== 目录生成 ==========
+// ========== 滚动监听（高亮当前章节）==========
+let scrollSpyObserver = null;
+
+function initScrollSpy() {
+  if (scrollSpyObserver) scrollSpyObserver.disconnect();
+
+  const tocLinks = document.querySelectorAll('#toc a[data-target]');
+  const headings = document.querySelectorAll('#markdown-body h1[id], #markdown-body h2[id], #markdown-body h3[id]');
+
+  // 点击跳转 + 平滑滚动
+  tocLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('data-target'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // IntersectionObserver 滚动监听
+  scrollSpyObserver = new IntersectionObserver((entries) => {
+    let activeId = null;
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        activeId = `#${entry.target.id}`;
+      }
+    }
+    // 没找到当前可见标题时，取最后一个已滚过的
+    if (!activeId) {
+      for (const entry of entries) {
+        if (entry.boundingClientRect.top <= 100) {
+          activeId = `#${entry.target.id}`;
+        }
+      }
+    }
+    if (activeId) {
+      tocLinks.forEach(link => {
+        const isActive = link.getAttribute('data-target') === activeId;
+        link.classList.toggle('toc-active', isActive);
+      });
+    }
+  }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+
+  headings.forEach(h => scrollSpyObserver.observe(h));
+}
 function generateTOC() {
   const tocContainer = document.getElementById('toc');
   const headings = document.querySelectorAll('#markdown-body h1, #markdown-body h2, #markdown-body h3');
@@ -168,17 +213,40 @@ function generateTOC() {
     tocContainer.innerHTML = '<p class="toc-empty">打开文件后显示目录</p>';
     return;
   }
-  let tocHTML = '<ul class="toc-list">';
+
+  let tocHTML = '';
+  const stack = []; // 追踪嵌套层级
+
   headings.forEach((h, idx) => {
     const level = parseInt(h.tagName[1]);
+    h.id = `heading-${idx}`;
     const text = h.textContent;
-    const id = `heading-${idx}`;
-    h.id = id;
-    const indent = (level - 1) * 16;
-    tocHTML += `<li style="padding-left:${indent}px"><a href="#${id}">${text}</a></li>`;
+
+    // 关闭更深或同级之前的标签
+    while (stack.length > 0 && stack[stack.length - 1] >= level) {
+      if (stack.pop() >= level) {
+        tocHTML += '</li></ul>';
+      }
+    }
+
+    // 如果当前层级更深，开启新子列表
+    if (stack.length === 0 || stack[stack.length - 1] < level) {
+      tocHTML += '<ul class="toc-tree">';
+      stack.push(level);
+    }
+
+    tocHTML += `<li class="toc-item toc-level-${level}">
+      <a href="#heading-${idx}" data-target="#heading-${idx}">${text}</a>`;
   });
-  tocHTML += '</ul>';
+
+  // 关闭所有未关闭的标签
+  while (stack.length > 0) {
+    stack.pop();
+    tocHTML += '</li></ul>';
+  }
+
   tocContainer.innerHTML = tocHTML;
+  initScrollSpy();
 }
 
 // ========== 代码块复制按钮 ==========
