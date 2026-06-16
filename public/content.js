@@ -127,18 +127,34 @@
   }
 
   // ========== MD 文件检测 ==========
+  // 策略：只在原始文本页上触发，跳过 GitHub/GitLab 等平台已渲染好的页面
   function isMdFile() {
-    const url = window.location.href;
-    const path = window.location.pathname;
+    var url = window.location.href;
+    var path = window.location.pathname;
+    var isMdPath = path.endsWith('.md') || path.endsWith('.markdown');
 
-    if (path.endsWith('.md') || path.endsWith('.markdown')) return true;
-    if (url.includes('/raw/') && (path.includes('.md') || path.includes('.markdown'))) return true;
+    // 场景1: raw 地址 → 肯定是原始文本，直接渲染
+    if (url.includes('/raw/') && isMdPath) return true;
 
-    if (url.includes('/blob/')) {
-      const readme = document.querySelector('article.markdown-body');
-      if (readme) return true;
-      const blobContent = document.querySelectorAll('.blob-code-content');
-      if (blobContent.length > 0) return true;
+    // 场景2: blob 地址（GitHub/GitLab 已渲染）→ 跳过
+    if (url.includes('/blob/')) return false;
+
+    // 场景3: 页面内容是原始文本（<pre> 标签）且 URL 是 .md → 渲染
+    if (isMdPath) {
+      var pre = document.querySelector('pre');
+      if (pre) {
+        // 进一步确认：pre 内容是纯文本而非已渲染的 HTML
+        var text = (pre.textContent || '').trim();
+        // 至少包含 Markdown 常见语法特征
+        var hasMdSyntax = /^#|^\- |^\* |^> |\[.+\]\(.+\)|```/.test(text);
+        if (hasMdSyntax) return true;
+      }
+    }
+
+    // 场景4: 纯 .md 后缀（非 GitHub 平台）→ 渲染
+    if (isMdPath && !url.includes('github.com') && !url.includes('gitlab.com')
+        && !url.includes('bitbucket.org') && !url.includes('gitee.com')) {
+      return true;
     }
 
     return false;
