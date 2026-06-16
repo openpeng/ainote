@@ -378,3 +378,48 @@
   color: #c9d1d9;
   border-color: #30363d;
 }
+
+/* ========== 目录面板 ========== */
+#ainote-toc-panel {
+  scrollbar-width: thin;
+}
+
+.ainote-toc-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ainote-toc-tree .ainote-toc-tree {
+  padding-left: 12px;
+  border-left: 1px solid #d0d7de;
+  margin-left: 4px;
+}
+
+.ainote-theme-dark .ainote-toc-tree .ainote-toc-tree {
+  border-left-color: #30363d;
+}
+
+.ainote-toc-item {
+  margin: 0;
+}
+
+.ainote-toc-item a {
+  display: block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ainote-toc-item a:hover {
+  background: rgba(128,128,128,0.15);
+}
+
+.ainote-toc-level-1 > a { font-weight: 600; font-size: 13px; }
+.ainote-toc-level-2 > a { font-size: 12px; padding-left: 12px; }
+.ainote-toc-level-3 > a { font-size: 11px; padding-left: 20px; color: #888; }

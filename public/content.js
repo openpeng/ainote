@@ -542,6 +542,12 @@
 
   // ========== 恢复原始页面 ==========
   function resetPage() {
+    // 移除目录面板
+    if (tocPanelEl) {
+      tocPanelEl.remove();
+      tocPanelEl = null;
+      tocIsOpen = false;
+    }
     if (originalContent) {
       document.body.innerHTML = originalContent;
       isRendered = false;
@@ -809,17 +815,90 @@
     const btnRender = mkBtn('ainote-btn-render', '📝 渲染', '#1a73e8', () => renderMarkdown());
     const btnEditor = mkBtn('ainote-btn-editor', '✏️ 编辑器', '#34a853', () => toggleEditorMode());
     const btnPDF    = mkBtn('ainote-btn-pdf', '📄 导出PDF', '#f9ab00', () => exportToPDF());
+    const btnTOC    = mkBtn('ainote-btn-toc', '📑 目录', '#7c3aed', () => toggleTOC());
     const btnReset  = mkBtn('ainote-btn-reset', '🔙 恢复', '#ea4335', () => resetPage());
 
     bar.appendChild(btnRender);
     bar.appendChild(btnEditor);
     bar.appendChild(btnPDF);
-    bar.appendChild(btnReset);
+    bar.appendChild(btnTOC);
     document.body.appendChild(bar);
 
     setButtonVisible('ainote-btn-editor', false);
     setButtonVisible('ainote-btn-pdf', false);
     setButtonVisible('ainote-btn-reset', false);
+  }
+
+  // ========== 目录 ==========
+  var tocPanelEl = null;
+  var tocIsOpen = false;
+
+  function generateTOC() {
+    var container = document.getElementById('ainote-rendered');
+    if (!container) return '';
+
+    var headings = container.querySelectorAll('h1, h2, h3');
+    if (!headings.length) return '';
+
+    var html = '';
+    var stack = [];
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      var level = parseInt(h.tagName.charAt(1));
+      var id = 'ainote-heading-' + i;
+      h.id = id;
+
+      while (stack.length > 0 && stack[stack.length - 1] >= level) {
+        stack.pop();
+        html += '</li></ul>';
+      }
+      if (stack.length === 0 || stack[stack.length - 1] < level) {
+        html += '<ul class="ainote-toc-tree">';
+        stack.push(level);
+      }
+      html += '<li class="ainote-toc-item ainote-toc-level-' + level + '">' +
+        '<a href="#' + id + '" onclick="document.getElementById(\'' + id + '\').scrollIntoView({behavior:\'smooth\'});return false">' +
+        escapeHtml(h.textContent) + '</a>';
+    }
+    while (stack.length > 0) { stack.pop(); html += '</li></ul>'; }
+    return html;
+  }
+
+  function toggleTOC() {
+    if (!tocPanelEl) {
+      tocPanelEl = document.createElement('div');
+      tocPanelEl.id = 'ainote-toc-panel';
+      tocPanelEl.style.cssText =
+        'position:fixed;top:0;left:0;width:260px;height:100vh;' +
+        'overflow-y:auto;z-index:999990;padding:16px 12px;' +
+        'background:' + (settings.theme === 'dark' ? '#161b22' : '#f6f8fa') + ';' +
+        'color:' + (settings.theme === 'dark' ? '#c9d1d9' : '#24292f') + ';' +
+        'border-right:1px solid ' + (settings.theme === 'dark' ? '#30363d' : '#d0d7de') + ';' +
+        'font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;' +
+        'box-shadow:2px 0 12px rgba(0,0,0,0.1);display:none;';
+      tocPanelEl.innerHTML = '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">📑 目录</div>' +
+        '<div id="ainote-toc-content">' + generateTOC() + '</div>';
+      document.body.appendChild(tocPanelEl);
+
+      // 调整页面内容左侧留出空间
+      var rendered = document.getElementById('ainote-rendered');
+      if (rendered) rendered.style.marginLeft = '260px';
+    }
+
+    tocIsOpen = !tocIsOpen;
+    tocPanelEl.style.display = tocIsOpen ? 'block' : 'none';
+
+    var rendered = document.getElementById('ainote-rendered');
+    if (rendered) rendered.style.marginLeft = tocIsOpen ? '260px' : '0';
+
+    // 更新 TOC 内容
+    if (tocIsOpen) {
+      var tocContent = document.getElementById('ainote-toc-content');
+      if (tocContent) tocContent.innerHTML = generateTOC();
+    }
+
+    var btn = document.getElementById('ainote-btn-toc');
+    if (btn) btn.textContent = tocIsOpen ? '📑 隐藏目录' : '📑 目录';
   }
 
   function setButtonVisible(id, visible) {
@@ -830,6 +909,7 @@
   function updateToolbarState() {
     setButtonVisible('ainote-btn-editor', isRendered);
     setButtonVisible('ainote-btn-pdf', isRendered);
+    setButtonVisible('ainote-btn-toc', isRendered);
     setButtonVisible('ainote-btn-reset', isRendered);
     setButtonVisible('ainote-btn-render', !isRendered);
   }
