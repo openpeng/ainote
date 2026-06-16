@@ -173,9 +173,9 @@
     var url = window.location.href.split('#')[0]; // 去掉现有 hash
     var path = window.location.pathname;
 
-    // GitHub: github.com/user/repo/blob/branch/path → raw.githubusercontent.com/user/repo/branch/path
+    // GitHub: github.com/user/repo/blob/branch/path → raw.githubusercontent.com/user/repo/refs/heads/branch/path
     if (url.indexOf('github.com') !== -1) {
-      return url.replace(/github\.com\/([^\/]+)\/([^\/]+)\/blob\//, 'raw.githubusercontent.com/$1/$2/');
+      return url.replace(/github\.com\/([^\/]+)\/([^\/]+)\/blob\//, 'raw.githubusercontent.com/$1/$2/refs/heads/');
     }
 
     // GitLab / Gitea / Gogs: .../blob/branch/path → .../raw/branch/path
