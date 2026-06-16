@@ -490,6 +490,15 @@
       isRendered = true;
       updateToolbarState();
 
+      // MD 文件渲染后自动显示目录
+      if (!tocIsOpen) {
+        toggleTOC();
+      } else {
+        // 目录已打开，刷新内容
+        var tocContent = document.getElementById('ainote-toc-content');
+        if (tocContent) tocContent.innerHTML = generateTOC();
+      }
+
       // 日志：打印渲染结果（可选，帮助调试）
       if (result.failed.length > 0) {
         console.warn('[AINote] 部分渲染器失败:', result.failed.join(', '));
@@ -876,9 +885,14 @@
         'border-right:1px solid ' + (settings.theme === 'dark' ? '#30363d' : '#d0d7de') + ';' +
         'font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;' +
         'box-shadow:2px 0 12px rgba(0,0,0,0.1);display:none;';
-      tocPanelEl.innerHTML = '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">📑 目录</div>' +
+      tocPanelEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+        '<span style="font-size:14px;font-weight:600;">📑 目录</span>' +
+        '<span id="ainote-toc-close" style="cursor:pointer;font-size:16px;color:#888;line-height:1;" title="关闭目录">&times;</span>' +
+        '</div>' +
         '<div id="ainote-toc-content">' + generateTOC() + '</div>';
       document.body.appendChild(tocPanelEl);
+
+      document.getElementById('ainote-toc-close').addEventListener('click', toggleTOC);
 
       // 调整页面内容左侧留出空间
       var rendered = document.getElementById('ainote-rendered');
