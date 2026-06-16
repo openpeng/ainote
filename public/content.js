@@ -824,13 +824,11 @@
     const btnRender = mkBtn('ainote-btn-render', '📝 渲染', '#1a73e8', () => renderMarkdown());
     const btnEditor = mkBtn('ainote-btn-editor', '✏️ 编辑器', '#34a853', () => toggleEditorMode());
     const btnPDF    = mkBtn('ainote-btn-pdf', '📄 导出PDF', '#f9ab00', () => exportToPDF());
-    const btnTOC    = mkBtn('ainote-btn-toc', '📑 目录', '#7c3aed', () => toggleTOC());
     const btnReset  = mkBtn('ainote-btn-reset', '🔙 恢复', '#ea4335', () => resetPage());
 
     bar.appendChild(btnRender);
     bar.appendChild(btnEditor);
     bar.appendChild(btnPDF);
-    bar.appendChild(btnTOC);
     document.body.appendChild(bar);
 
     setButtonVisible('ainote-btn-editor', false);
@@ -910,9 +908,6 @@
       var tocContent = document.getElementById('ainote-toc-content');
       if (tocContent) tocContent.innerHTML = generateTOC();
     }
-
-    var btn = document.getElementById('ainote-btn-toc');
-    if (btn) btn.textContent = tocIsOpen ? '📑 隐藏目录' : '📑 目录';
   }
 
   function setButtonVisible(id, visible) {
@@ -923,7 +918,6 @@
   function updateToolbarState() {
     setButtonVisible('ainote-btn-editor', isRendered);
     setButtonVisible('ainote-btn-pdf', isRendered);
-    setButtonVisible('ainote-btn-toc', isRendered);
     setButtonVisible('ainote-btn-reset', isRendered);
     setButtonVisible('ainote-btn-render', !isRendered);
   }
