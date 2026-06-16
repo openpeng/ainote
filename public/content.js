@@ -153,12 +153,42 @@
     // 通用：页面中已有非 pre 标签的 h1-h6 标题（说明已被渲染）
     var headings = document.querySelectorAll('h1, h2, h3');
     for (var i = 0; i < headings.length; i++) {
-      // 排除在 <pre> 内部的标题（源文本中 # 不会被渲染）
       if (!headings[i].closest('pre') && !headings[i].closest('#ainote-rendered')) {
         return true;
       }
     }
     return false;
+  }
+
+  // 检测是否为 blob 页面（平台已渲染 MD，可跳转到 raw）
+  function isBlobMdPage() {
+    var path = window.location.pathname;
+    var isMdPath = path.endsWith('.md') || path.endsWith('.markdown');
+    if (!isMdPath) return false;
+    return hasRenderedMarkdown();
+  }
+
+  // 将 blob URL 转换为 raw URL
+  function getRawUrl() {
+    var url = window.location.href.split('#')[0]; // 去掉现有 hash
+    var path = window.location.pathname;
+
+    // GitHub: github.com/user/repo/blob/branch/path → raw.githubusercontent.com/user/repo/branch/path
+    if (url.indexOf('github.com') !== -1) {
+      return url.replace(/github\.com\/([^\/]+)\/([^\/]+)\/blob\//, 'raw.githubusercontent.com/$1/$2/');
+    }
+
+    // GitLab / Gitea / Gogs: .../blob/branch/path → .../raw/branch/path
+    if (path.indexOf('/blob/') !== -1) {
+      return url.replace('/blob/', '/raw/');
+    }
+
+    // Gitea: .../src/branch/path → .../raw/branch/path
+    if (path.indexOf('/src/') !== -1) {
+      return url.replace('/src/', '/raw/');
+    }
+
+    return '';
   }
 
   // ========== 独立文件格式检测 ==========
@@ -254,6 +284,30 @@
     document.body.appendChild(bar);
 
     setButtonVisible('ainote-btn-reset', false);
+  }
+
+  // ========== Blob 页面工具栏（跳转 raw 渲染）==========
+  function addBlobToolbar() {
+    if (document.getElementById('ainote-toolbar')) return;
+
+    var rawUrl = getRawUrl();
+    if (!rawUrl) return;
+
+    var bar = document.createElement('div');
+    bar.id = 'ainote-toolbar';
+    bar.style.cssText = 'position:fixed;bottom:20px;right:20px;display:flex;gap:8px;z-index:999999;';
+
+    var btn = document.createElement('button');
+    btn.id = 'ainote-btn-raw-render';
+    btn.textContent = '📝 AINote 渲染';
+    btn.title = '跳转到原始文本页面并用 AINote 渲染';
+    btn.style.cssText = 'padding:8px 16px;border:none;border-radius:6px;background:#7c3aed;color:#fff;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);white-space:nowrap;';
+    btn.addEventListener('click', function() {
+      window.location.href = rawUrl + '#ainote-render';
+    });
+
+    bar.appendChild(btn);
+    document.body.appendChild(bar);
   }
 
   // ========== drawio 文件检测 ==========
@@ -969,10 +1023,22 @@
       if (isMdFile()) addToolbar();
       else if (isDrawioFile()) renderDrawio();
       else if (detectStandaloneFormat()) addStandaloneToolbar();
+      else if (isBlobMdPage()) addBlobToolbar();
+      // 从 blob 页面跳转过来的自动渲染
+      if (window.location.hash === '#ainote-render') {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        if (isMdFile()) renderMarkdown();
+      }
     });
   } else {
     if (isMdFile()) addToolbar();
     else if (isDrawioFile()) renderDrawio();
     else if (detectStandaloneFormat()) addStandaloneToolbar();
+    else if (isBlobMdPage()) addBlobToolbar();
+    // 从 blob 页面跳转过来的自动渲染
+    if (window.location.hash === '#ainote-render') {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+      if (isMdFile()) renderMarkdown();
+    }
   }
 })();
