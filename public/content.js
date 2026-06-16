@@ -127,36 +127,37 @@
   }
 
   // ========== MD 文件检测 ==========
-  // 策略：只在原始文本页上触发，跳过 GitHub/GitLab 等平台已渲染好的页面
+  // 策略：只在原始文本页上触发，如果页面已有渲染好的 Markdown 则跳过
   function isMdFile() {
     var url = window.location.href;
     var path = window.location.pathname;
     var isMdPath = path.endsWith('.md') || path.endsWith('.markdown');
 
-    // 场景1: raw 地址 → 肯定是原始文本，直接渲染
-    if (url.includes('/raw/') && isMdPath) return true;
+    if (!isMdPath) return false;
 
-    // 场景2: blob 地址（GitHub/GitLab 已渲染）→ 跳过
-    if (url.includes('/blob/')) return false;
+    // 页面已有渲染好的 Markdown 内容 → 跳过（GitHub/GitLab/Gitea/内网 等）
+    if (hasRenderedMarkdown()) return false;
 
-    // 场景3: 页面内容是原始文本（<pre> 标签）且 URL 是 .md → 渲染
-    if (isMdPath) {
-      var pre = document.querySelector('pre');
-      if (pre) {
-        // 进一步确认：pre 内容是纯文本而非已渲染的 HTML
-        var text = (pre.textContent || '').trim();
-        // 至少包含 Markdown 常见语法特征
-        var hasMdSyntax = /^#|^\- |^\* |^> |\[.+\]\(.+\)|```/.test(text);
-        if (hasMdSyntax) return true;
+    // 原始文本页 → 检测并渲染
+    return true;
+  }
+
+  // 检测页面是否已有渲染好的 Markdown 内容
+  function hasRenderedMarkdown() {
+    // GitHub blob 页面的渲染容器
+    if (document.querySelector('article.markdown-body')) return true;
+    // GitLab blob 页面的渲染容器
+    if (document.querySelector('.file-content .md, .readme-holder, .blob-viewer')) return true;
+    // Gitea/Gogs 渲染容器
+    if (document.querySelector('.markup, .file-view.markdown')) return true;
+    // 通用：页面中已有非 pre 标签的 h1-h6 标题（说明已被渲染）
+    var headings = document.querySelectorAll('h1, h2, h3');
+    for (var i = 0; i < headings.length; i++) {
+      // 排除在 <pre> 内部的标题（源文本中 # 不会被渲染）
+      if (!headings[i].closest('pre') && !headings[i].closest('#ainote-rendered')) {
+        return true;
       }
     }
-
-    // 场景4: 纯 .md 后缀（非 GitHub 平台）→ 渲染
-    if (isMdPath && !url.includes('github.com') && !url.includes('gitlab.com')
-        && !url.includes('bitbucket.org') && !url.includes('gitee.com')) {
-      return true;
-    }
-
     return false;
   }
 
