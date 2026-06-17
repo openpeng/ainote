@@ -61,7 +61,7 @@ function shikiPlugin(md, highlighter) {
     const loadedLangs = highlighter.getLoadedLanguages();
     if (highlighter && loadedLangs.includes(lang)) {
       try {
-        const highlighted = highlighter.codeToHtml(code, { lang });
+        const highlighted = highlighter.codeToHtml(code, { lang, theme: 'github-light' });
         return `<div class="code-block">${highlighted}</div>`;
       } catch (e) {
         // fallback to default

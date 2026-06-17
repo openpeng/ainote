@@ -24,7 +24,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     // 初始化默认设置
     chrome.storage.sync.set({
       autoRender: true,
-      theme: 'light',
+      theme: 'orange',
       fontSize: 16,
       lineNumbers: true,
       editorMode: false

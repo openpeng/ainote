@@ -1,4 +1,4 @@
-/* AINote 内容样式 - 用于浏览器插件渲染 */
+/* AINote 内容样式 - 用于浏览器插件渲�?*/
 
 /* 渲染容器 */
 #ainote-rendered {
@@ -12,7 +12,6 @@
 }
 
 /* 暗色主题 */
-.ainote-theme-dark #ainote-rendered,
 #ainote-rendered.ainote-theme-dark {
   color: #c9d1d9;
   background: #0d1117;
@@ -38,11 +37,11 @@
 #ainote-rendered h5 { font-size: 0.875em; }
 #ainote-rendered h6 { font-size: 0.85em; color: #6a737d; }
 
-.ainote-theme-dark #ainote-rendered h1,
-.ainote-theme-dark #ainote-rendered h2 {
+#ainote-rendered.ainote-theme-dark h1,
+#ainote-rendered.ainote-theme-dark h2 {
   border-bottom-color: #30363d;
 }
-.ainote-theme-dark #ainote-rendered h6 {
+#ainote-rendered.ainote-theme-dark h6 {
   color: #8b949e;
 }
 
@@ -60,7 +59,7 @@
 #ainote-rendered a:hover {
   text-decoration: underline;
 }
-.ainote-theme-dark #ainote-rendered a {
+#ainote-rendered.ainote-theme-dark a {
   color: #58a6ff;
 }
 
@@ -75,7 +74,7 @@
   margin-bottom: 4px;
 }
 
-/* 代码块 */
+/* 代码�?*/
 #ainote-rendered pre {
   background: #f6f8fa;
   border-radius: 6px;
@@ -85,7 +84,7 @@
   font-size: 85%;
   line-height: 1.45;
 }
-.ainote-theme-dark #ainote-rendered pre {
+#ainote-rendered.ainote-theme-dark pre {
   background: #161b22;
 }
 
@@ -96,23 +95,25 @@
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 85%;
 }
-.ainote-theme-dark #ainote-rendered code {
+#ainote-rendered.ainote-theme-dark code {
   background: rgba(240,246,252,0.15);
 }
 
 #ainote-rendered pre code {
-  background: transparent;
+  ackground: transparent;
+  order: none;
+  ont-weight: normal;
   padding: 0;
 }
 
-/* 引用块 */
+/* 引用�?*/
 #ainote-rendered blockquote {
   margin: 0 0 16px 0;
   padding: 0 1em;
   color: #6a737d;
   border-left: 4px solid #dfe2e5;
 }
-.ainote-theme-dark #ainote-rendered blockquote {
+#ainote-rendered.ainote-theme-dark blockquote {
   color: #8b949e;
   border-left-color: #30363d;
 }
@@ -133,22 +134,22 @@
   background: #f6f8fa;
   font-weight: 600;
 }
-.ainote-theme-dark #ainote-rendered th,
-.ainote-theme-dark #ainote-rendered td {
+#ainote-rendered.ainote-theme-dark th,
+#ainote-rendered.ainote-theme-dark td {
   border-color: #30363d;
 }
-.ainote-theme-dark #ainote-rendered th {
+#ainote-rendered.ainote-theme-dark th {
   background: #161b22;
 }
 
-/* 水平线 */
+/* 水平�?*/
 #ainote-rendered hr {
   height: 0.25em;
   background: #e1e4e8;
   border: none;
   margin: 24px 0;
 }
-.ainote-theme-dark #ainote-rendered hr {
+#ainote-rendered.ainote-theme-dark hr {
   background: #30363d;
 }
 
@@ -192,87 +193,402 @@
   background: #1557b0;
 }
 
+/* ============================================
+   橙黄醒目主题（默认）
+   暖色调、高对比度、视觉冲击力�?
+   ============================================ */
+#ainote-rendered.ainote-theme-orange {
+  background: linear-gradient(180deg, #fffdf7 0%, #fffbf2 100%);
+  color: #2d1b00;
+  border-left: 3px solid #ff8a65;
+  border-right: 3px solid #ff8a65;
+  border-radius: 8px;
+}
+
+#ainote-rendered.ainote-theme-orange h1 {
+  color: #bf360c;
+  border-bottom: 3px solid #ff8a65;
+  font-size: 2.2em;
+}
+
+#ainote-rendered.ainote-theme-orange h2 {
+  color: #d84315;
+  border-bottom: 2px solid #ff8a65;
+}
+
+#ainote-rendered.ainote-theme-orange h3 {
+  color: #e65100;
+}
+
+#ainote-rendered.ainote-theme-orange h4 {
+  color: #ef6c00;
+}
+
+#ainote-rendered.ainote-theme-orange h5,
+#ainote-rendered.ainote-theme-orange h6 {
+  color: #f57c00;
+}
+
+#ainote-rendered.ainote-theme-orange a {
+  color: #e65100;
+  font-weight: 500;
+}
+
+#ainote-rendered.ainote-theme-orange a:hover {
+  color: #bf360c;
+}
+
+#ainote-rendered.ainote-theme-orange strong {
+  color: #d84315;
+}
+
+#ainote-rendered.ainote-theme-orange code {
+  background: #fff3e0;
+  color: #bf360c;
+  border: 1px solid #ffcc80;
+  font-weight: 500;
+}
+
+#ainote-rendered.ainote-theme-orange pre {
+  background: #fff3e0;
+  border: 1px solid #ffcc80;
+}
+
+#ainote-rendered.ainote-theme-orange pre code {
+  background: transparent;
+  border: none;
+  font-weight: normal;
+}
+
+#ainote-rendered.ainote-theme-orange blockquote {
+  background: #fff8e1;
+  border-left: 5px solid #ffb300;
+  color: #6d3b00;
+}
+
+#ainote-rendered.ainote-theme-orange th {
+  background: #ff6f00;
+  color: #ffffff;
+}
+
+#ainote-rendered.ainote-theme-orange th,
+#ainote-rendered.ainote-theme-orange td {
+  border-color: #ffe0b2;
+}
+
+#ainote-rendered.ainote-theme-orange tr:nth-child(even) {
+  background: #fff8e1;
+}
+
+#ainote-rendered.ainote-theme-orange hr {
+  background: #ffcc80;
+  height: 2px;
+}
+
+#ainote-rendered.ainote-theme-orange input[type="checkbox"] {
+  accent-color: #ff6f00;
+}
+
+/* 暗色适配：橙黄主题下的图表容器沿用浅色背�?*/
+#ainote-rendered.ainote-theme-orange .plantuml-chart,
+#ainote-rendered.ainote-theme-orange .graphviz-chart,
+#ainote-rendered.ainote-theme-orange .d2-chart {
+  background: #fffdf7;
+  border: 1px solid #ffe0b2;
+}
+
+/* 橙黄主题 - 代码高亮覆盖 */
+#ainote-rendered.ainote-theme-orange .hljs {
+  background: #fffdf7;
+  color: #3d2b1f;
+}
+/* 代码块容�?*/
+#ainote-rendered.ainote-theme-orange pre code.hljs {
+  background: #fffdf7;
+}
+/* 橙黄主题 - 代码 token 暖色覆盖 */
+#ainote-rendered.ainote-theme-orange .hljs-keyword,
+#ainote-rendered.ainote-theme-orange .hljs-doctag,
+#ainote-rendered.ainote-theme-orange .hljs-type,
+#ainote-rendered.ainote-theme-orange .hljs-template-tag,
+#ainote-rendered.ainote-theme-orange .hljs-template-variable,
+#ainote-rendered.ainote-theme-orange .hljs-variable.language_,
+#ainote-rendered.ainote-theme-orange .hljs-meta .hljs-keyword { color: #d84315; }
+#ainote-rendered.ainote-theme-orange .hljs-title,
+#ainote-rendered.ainote-theme-orange .hljs-title.class_,
+#ainote-rendered.ainote-theme-orange .hljs-title.class_.inherited__,
+#ainote-rendered.ainote-theme-orange .hljs-title.function_ { color: #6f42c1; }
+#ainote-rendered.ainote-theme-orange .hljs-attr,
+#ainote-rendered.ainote-theme-orange .hljs-attribute,
+#ainote-rendered.ainote-theme-orange .hljs-literal,
+#ainote-rendered.ainote-theme-orange .hljs-meta,
+#ainote-rendered.ainote-theme-orange .hljs-number,
+#ainote-rendered.ainote-theme-orange .hljs-operator,
+#ainote-rendered.ainote-theme-orange .hljs-selector-attr,
+#ainote-rendered.ainote-theme-orange .hljs-selector-class,
+#ainote-rendered.ainote-theme-orange .hljs-selector-id,
+#ainote-rendered.ainote-theme-orange .hljs-variable { color: #9c5d00; }
+#ainote-rendered.ainote-theme-orange .hljs-meta .hljs-string,
+#ainote-rendered.ainote-theme-orange .hljs-regexp,
+#ainote-rendered.ainote-theme-orange .hljs-string { color: #6d3b00; }
+#ainote-rendered.ainote-theme-orange .hljs-built_in,
+#ainote-rendered.ainote-theme-orange .hljs-symbol { color: #e65100; }
+#ainote-rendered.ainote-theme-orange .hljs-code,
+#ainote-rendered.ainote-theme-orange .hljs-comment,
+#ainote-rendered.ainote-theme-orange .hljs-formula { color: #b8956a; }
+#ainote-rendered.ainote-theme-orange .hljs-name,
+#ainote-rendered.ainote-theme-orange .hljs-quote,
+#ainote-rendered.ainote-theme-orange .hljs-selector-pseudo,
+#ainote-rendered.ainote-theme-orange .hljs-selector-tag { color: #22863a; }
+#ainote-rendered.ainote-theme-orange .hljs-subst { color: #3d2b1f; }
+#ainote-rendered.ainote-theme-orange .hljs-section { color: #9c5d00; font-weight: 700; }
+#ainote-rendered.ainote-theme-orange .hljs-bullet { color: #735c0f; }
+#ainote-rendered.ainote-theme-orange .hljs-emphasis { color: #3d2b1f; font-style: italic; }
+#ainote-rendered.ainote-theme-orange .hljs-strong { color: #3d2b1f; font-weight: 700; }
+#ainote-rendered.ainote-theme-orange .hljs-addition { color: #22863a; background-color: #f0fff4; }
+#ainote-rendered.ainote-theme-orange .hljs-deletion { color: #b31d28; background-color: #ffeef0; }
+
 /* GitHub 主题 */
-.ainote-theme-github #ainote-rendered {
+#ainote-rendered.ainote-theme-github {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   color: #24292e;
   background: #ffffff;
 }
 
-.ainote-theme-github #ainote-rendered h1,
-.ainote-theme-github #ainote-rendered h2 {
+#ainote-rendered.ainote-theme-github h1,
+#ainote-rendered.ainote-theme-github h2 {
   border-bottom: 1px solid #eaecef;
   padding-bottom: 0.3em;
 }
 
-.ainote-theme-github #ainote-rendered pre {
+#ainote-rendered.ainote-theme-github pre {
   background: #f6f8fa;
   border-radius: 6px;
 }
 
-.ainote-theme-github #ainote-rendered code {
+#ainote-rendered.ainote-theme-github code {
   background: rgba(27,31,35,0.05);
 }
 
-.ainote-theme-github #ainote-rendered a {
+#ainote-rendered.ainote-theme-github a {
   color: #0366d6;
 }
 
 /* VuePress 主题 */
-.ainote-theme-vuepress #ainote-rendered {
+#ainote-rendered.ainote-theme-vuepress {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   color: #2c3e50;
   background: #ffffff;
 }
 
-.ainote-theme-vuepress #ainote-rendered h1 {
+#ainote-rendered.ainote-theme-vuepress h1 {
   font-size: 2.2em;
   color: #2c3e50;
 }
 
-.ainote-theme-vuepress #ainote-rendered h2 {
+#ainote-rendered.ainote-theme-vuepress h2 {
   font-size: 1.65em;
   border-bottom: 1px solid #eaecef;
   padding-bottom: 0.3em;
 }
 
-.ainote-theme-vuepress #ainote-rendered a {
+#ainote-rendered.ainote-theme-vuepress a {
   color: #3eaf7c;
 }
 
-.ainote-theme-vuepress #ainote-rendered pre {
+#ainote-rendered.ainote-theme-vuepress pre {
   background: #282c34;
   color: #abb2bf;
   border-radius: 6px;
 }
 
 /* GitBook 主题 */
-.ainote-theme-gitbook #ainote-rendered {
+#ainote-rendered.ainote-theme-gitbook {
   font-family: 'Open Sans', 'Clear Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: #333;
   background: #fff;
   font-size: 1.1em;
 }
 
-.ainote-theme-gitbook #ainote-rendered h1,
-.ainote-theme-gitbook #ainote-rendered h2,
-.ainote-theme-gitbook #ainote-rendered h3,
-.ainote-theme-gitbook #ainote-rendered h4,
-.ainote-theme-gitbook #ainote-rendered h5,
-.ainote-theme-gitbook #ainote-rendered h6 {
+#ainote-rendered.ainote-theme-gitbook h1,
+#ainote-rendered.ainote-theme-gitbook h2,
+#ainote-rendered.ainote-theme-gitbook h3,
+#ainote-rendered.ainote-theme-gitbook h4,
+#ainote-rendered.ainote-theme-gitbook h5,
+#ainote-rendered.ainote-theme-gitbook h6 {
   color: #2c3e50;
   font-weight: 600;
 }
 
-.ainote-theme-gitbook #ainote-rendered a {
+#ainote-rendered.ainote-theme-gitbook a {
   color: #4183c4;
 }
 
-.ainote-theme-gitbook #ainote-rendered pre {
+#ainote-rendered.ainote-theme-gitbook pre {
   background: #f7f7f7;
   border: 1px solid #e7e7e7;
   border-radius: 4px;
 }
+
+/* ============================================
+   Theme: Dracula �?经典暗紫主题 (draculatheme.com)
+   ============================================ */
+#ainote-rendered.ainote-theme-dracula {
+  background: #282a36;
+  color: #f8f8f2;
+  border: 1px solid #44475a;
+  border-radius: 8px;
+}
+#ainote-rendered.ainote-theme-dracula h1,
+#ainote-rendered.ainote-theme-dracula h2,
+#ainote-rendered.ainote-theme-dracula h3,
+#ainote-rendered.ainote-theme-dracula h4 { color: #bd93f9; }
+#ainote-rendered.ainote-theme-dracula h1 { border-bottom: 2px solid #6272a4; }
+#ainote-rendered.ainote-theme-dracula h2 { border-bottom: 1px solid #6272a4; }
+#ainote-rendered.ainote-theme-dracula a { color: #8be9fd; }
+#ainote-rendered.ainote-theme-dracula a:hover { color: #ff79c6; }
+#ainote-rendered.ainote-theme-dracula strong { color: #ffb86c; }
+#ainote-rendered.ainote-theme-dracula code { background: #44475a; color: #f8f8f2; border: 1px solid #6272a4; }
+#ainote-rendered.ainote-theme-dracula pre { background: #44475a; border: 1px solid #6272a4; }
+#ainote-rendered.ainote-theme-dracula pre code { background: transparent; border: none; font-weight: normal; }
+#ainote-rendered.ainote-theme-dracula blockquote { background: #383a59; border-left: 5px solid #bd93f9; color: #f8f8f2; }
+#ainote-rendered.ainote-theme-dracula table th { background: #6272a4; color: #f8f8f2; }
+#ainote-rendered.ainote-theme-dracula table td,
+#ainote-rendered.ainote-theme-dracula table th { border-color: #44475a; }
+#ainote-rendered.ainote-theme-dracula tr:nth-child(even) { background: #2d2f44; }
+#ainote-rendered.ainote-theme-dracula hr { background: #6272a4; height: 2px; }
+#ainote-rendered.ainote-theme-dracula input[type="checkbox"] { accent-color: #bd93f9; }
+/* Dracula hljs 覆盖 */
+#ainote-rendered.ainote-theme-dracula .hljs { background: #44475a !important; color: #f8f8f2 !important; }
+#ainote-rendered.ainote-theme-dracula pre code.hljs { background: #44475a !important; }
+
+/* ============================================
+   Theme: Nord �?冷淡蓝灰 (nordtheme.com)
+   ============================================ */
+#ainote-rendered.ainote-theme-nord {
+  background: #2e3440;
+  color: #d8dee9;
+  border: 1px solid #4c566a;
+  border-radius: 8px;
+}
+#ainote-rendered.ainote-theme-nord h1,
+#ainote-rendered.ainote-theme-nord h2,
+#ainote-rendered.ainote-theme-nord h3,
+#ainote-rendered.ainote-theme-nord h4 { color: #88c0d0; }
+#ainote-rendered.ainote-theme-nord h1 { border-bottom: 2px solid #4c566a; }
+#ainote-rendered.ainote-theme-nord h2 { border-bottom: 1px solid #4c566a; }
+#ainote-rendered.ainote-theme-nord a { color: #81a1c1; }
+#ainote-rendered.ainote-theme-nord a:hover { color: #8fbcbb; }
+#ainote-rendered.ainote-theme-nord strong { color: #ebcb8b; }
+#ainote-rendered.ainote-theme-nord code { background: #3b4252; color: #d8dee9; border: 1px solid #4c566a; }
+#ainote-rendered.ainote-theme-nord pre { background: #3b4252; border: 1px solid #4c566a; }
+#ainote-rendered.ainote-theme-nord pre code { background: transparent; border: none; font-weight: normal; }
+#ainote-rendered.ainote-theme-nord blockquote { background: #3b4252; border-left: 5px solid #5e81ac; color: #d8dee9; }
+#ainote-rendered.ainote-theme-nord table th { background: #4c566a; color: #d8dee9; }
+#ainote-rendered.ainote-theme-nord table td,
+#ainote-rendered.ainote-theme-nord table th { border-color: #3b4252; }
+#ainote-rendered.ainote-theme-nord tr:nth-child(even) { background: #363c4a; }
+#ainote-rendered.ainote-theme-nord hr { background: #4c566a; height: 2px; }
+#ainote-rendered.ainote-theme-nord input[type="checkbox"] { accent-color: #88c0d0; }
+/* Nord hljs 覆盖 */
+#ainote-rendered.ainote-theme-nord .hljs { background: #3b4252 !important; color: #d8dee9 !important; }
+#ainote-rendered.ainote-theme-nord pre code.hljs { background: #3b4252 !important; }
+
+/* ============================================
+   Theme: Gruvbox Light �?复古暖光 (github.com/morhetz/gruvbox)
+   ============================================ */
+#ainote-rendered.ainote-theme-gruvbox {
+  background: #fbf1c7;
+  color: #3c3836;
+  border: 1px solid #d5c4a1;
+  border-radius: 8px;
+}
+#ainote-rendered.ainote-theme-gruvbox h1,
+#ainote-rendered.ainote-theme-gruvbox h2 { color: #b16286; }
+#ainote-rendered.ainote-theme-gruvbox h3,
+#ainote-rendered.ainote-theme-gruvbox h4 { color: #8f3f71; }
+#ainote-rendered.ainote-theme-gruvbox h1 { border-bottom: 3px solid #d79921; }
+#ainote-rendered.ainote-theme-gruvbox h2 { border-bottom: 2px solid #d5c4a1; }
+#ainote-rendered.ainote-theme-gruvbox a { color: #076678; }
+#ainote-rendered.ainote-theme-gruvbox a:hover { color: #458588; }
+#ainote-rendered.ainote-theme-gruvbox strong { color: #cc241d; }
+#ainote-rendered.ainote-theme-gruvbox code { background: #ebdbb2; color: #3c3836; border: 1px solid #d5c4a1; }
+#ainote-rendered.ainote-theme-gruvbox pre { background: #ebdbb2; border: 1px solid #d5c4a1; }
+#ainote-rendered.ainote-theme-gruvbox pre code { background: transparent; border: none; font-weight: normal; }
+#ainote-rendered.ainote-theme-gruvbox blockquote { background: #f2e5bc; border-left: 5px solid #d79921; color: #3c3836; }
+#ainote-rendered.ainote-theme-gruvbox table th { background: #d5c4a1; color: #3c3836; }
+#ainote-rendered.ainote-theme-gruvbox table td,
+#ainote-rendered.ainote-theme-gruvbox table th { border-color: #bdae93; }
+#ainote-rendered.ainote-theme-gruvbox tr:nth-child(even) { background: #f2e5bc; }
+#ainote-rendered.ainote-theme-gruvbox hr { background: #d5c4a1; height: 2px; }
+#ainote-rendered.ainote-theme-gruvbox input[type="checkbox"] { accent-color: #d79921; }
+/* Gruvbox hljs 覆盖 */
+#ainote-rendered.ainote-theme-gruvbox .hljs { background: #ebdbb2 !important; color: #3c3836 !important; }
+#ainote-rendered.ainote-theme-gruvbox pre code.hljs { background: #ebdbb2 !important; }
+
+/* ============================================
+   Theme: Catppuccin Latte �?柔和粉彩 (catppuccin.com)
+   ============================================ */
+#ainote-rendered.ainote-theme-catppuccin {
+  background: #eff1f5;
+  color: #4c4f69;
+  border: 1px solid #ccd0da;
+  border-radius: 8px;
+}
+#ainote-rendered.ainote-theme-catppuccin h1,
+#ainote-rendered.ainote-theme-catppuccin h2 { color: #8839ef; }
+#ainote-rendered.ainote-theme-catppuccin h3,
+#ainote-rendered.ainote-theme-catppuccin h4 { color: #9b59b6; }
+#ainote-rendered.ainote-theme-catppuccin h1 { border-bottom: 2px solid #fe640b; }
+#ainote-rendered.ainote-theme-catppuccin h2 { border-bottom: 1px solid #ccd0da; }
+#ainote-rendered.ainote-theme-catppuccin a { color: #1e66f5; }
+#ainote-rendered.ainote-theme-catppuccin a:hover { color: #ea76cb; }
+#ainote-rendered.ainote-theme-catppuccin strong { color: #d20f39; }
+#ainote-rendered.ainote-theme-catppuccin code { background: #e6e9ef; color: #4c4f69; border: 1px solid #ccd0da; }
+#ainote-rendered.ainote-theme-catppuccin pre { background: #e6e9ef; border: 1px solid #ccd0da; }
+#ainote-rendered.ainote-theme-catppuccin pre code { background: transparent; border: none; font-weight: normal; }
+#ainote-rendered.ainote-theme-catppuccin blockquote { background: #e6e9ef; border-left: 5px solid #fe640b; color: #5c5f77; }
+#ainote-rendered.ainote-theme-catppuccin table th { background: #ccd0da; color: #4c4f69; }
+#ainote-rendered.ainote-theme-catppuccin table td,
+#ainote-rendered.ainote-theme-catppuccin table th { border-color: #bcc0cc; }
+#ainote-rendered.ainote-theme-catppuccin tr:nth-child(even) { background: #e6e9ef; }
+#ainote-rendered.ainote-theme-catppuccin hr { background: #ccd0da; height: 2px; }
+#ainote-rendered.ainote-theme-catppuccin input[type="checkbox"] { accent-color: #fe640b; }
+/* Catppuccin hljs 覆盖 */
+#ainote-rendered.ainote-theme-catppuccin .hljs { background: #e6e9ef !important; color: #4c4f69 !important; }
+#ainote-rendered.ainote-theme-catppuccin pre code.hljs { background: #e6e9ef !important; }
+
+/* ============================================
+   Theme: Tokyo Night �?东京暗夜 (github.com/tokyo-night)
+   ============================================ */
+#ainote-rendered.ainote-theme-tokyonight {
+  background: #1a1b26;
+  color: #c0caf5;
+  border: 1px solid #364a82;
+  border-radius: 8px;
+}
+#ainote-rendered.ainote-theme-tokyonight h1,
+#ainote-rendered.ainote-theme-tokyonight h2,
+#ainote-rendered.ainote-theme-tokyonight h3,
+#ainote-rendered.ainote-theme-tokyonight h4 { color: #bb9af7; }
+#ainote-rendered.ainote-theme-tokyonight h1 { border-bottom: 2px solid #364a82; }
+#ainote-rendered.ainote-theme-tokyonight h2 { border-bottom: 1px solid #364a82; }
+#ainote-rendered.ainote-theme-tokyonight a { color: #7aa2f7; }
+#ainote-rendered.ainote-theme-tokyonight a:hover { color: #7dcfff; }
+#ainote-rendered.ainote-theme-tokyonight strong { color: #ff9e64; }
+#ainote-rendered.ainote-theme-tokyonight code { background: #24283b; color: #c0caf5; border: 1px solid #364a82; }
+#ainote-rendered.ainote-theme-tokyonight pre { background: #24283b; border: 1px solid #364a82; }
+#ainote-rendered.ainote-theme-tokyonight pre code { background: transparent; border: none; font-weight: normal; }
+#ainote-rendered.ainote-theme-tokyonight blockquote { background: #1f2335; border-left: 5px solid #7aa2f7; color: #c0caf5; }
+#ainote-rendered.ainote-theme-tokyonight table th { background: #364a82; color: #c0caf5; }
+#ainote-rendered.ainote-theme-tokyonight table td,
+#ainote-rendered.ainote-theme-tokyonight table th { border-color: #24283b; }
+#ainote-rendered.ainote-theme-tokyonight tr:nth-child(even) { background: #1f2335; }
+#ainote-rendered.ainote-theme-tokyonight hr { background: #364a82; height: 2px; }
+#ainote-rendered.ainote-theme-tokyonight input[type="checkbox"] { accent-color: #bb9af7; }
+/* Tokyo Night hljs 覆盖 */
+#ainote-rendered.ainote-theme-tokyonight .hljs { background: #24283b !important; color: #c0caf5 !important; }
+#ainote-rendered.ainote-theme-tokyonight pre code.hljs { background: #24283b !important; }
 
 /* PlantUML 图表容器 */
 #ainote-rendered .plantuml-chart {
@@ -283,7 +599,7 @@
   border-radius: 8px;
 }
 
-.ainote-theme-dark #ainote-rendered .plantuml-chart {
+#ainote-rendered.ainote-theme-dark .plantuml-chart {
   background: #161b22;
 }
 
@@ -301,7 +617,7 @@
   border-radius: 8px;
 }
 
-.ainote-theme-dark #ainote-rendered .graphviz-chart {
+#ainote-rendered.ainote-theme-dark .graphviz-chart {
   background: #161b22;
 }
 
@@ -319,7 +635,7 @@
   border-radius: 8px;
 }
 
-.ainote-theme-dark #ainote-rendered .d2-chart {
+#ainote-rendered.ainote-theme-dark .d2-chart {
   background: #161b22;
 }
 
@@ -328,13 +644,13 @@
   height: auto;
 }
 
-/* 确保直接嵌入的 SVG 正常显示 */
+/* 确保直接嵌入�?SVG 正常显示 */
 #ainote-rendered svg {
   max-width: 100%;
   height: auto;
 }
 
-/* 编辑器模式样式 */
+/* 编辑器模式样�?*/
 #ainote-editor-wrapper {
   display: flex;
   gap: 20px;
@@ -423,3 +739,122 @@
 .ainote-toc-level-1 > a { font-weight: 600; font-size: 13px; }
 .ainote-toc-level-2 > a { font-size: 12px; padding-left: 12px; }
 .ainote-toc-level-3 > a { font-size: 11px; padding-left: 20px; color: #888; }
+
+/* ========== 浮动主题切换�?========== */
+#ainote-theme-switcher {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.ainote-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.92);
+  color: #333;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.ainote-theme-btn:hover {
+  background: rgba(255,255,255,0.98);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.ainote-theme-btn .theme-current-label {
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ainote-theme-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 150px;
+  overflow: hidden;
+  display: none;
+}
+
+.ainote-theme-dropdown.open {
+  display: block;
+}
+
+.ainote-theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.ainote-theme-option:hover {
+  background: #f5f5f5;
+}
+
+.ainote-theme-option.active {
+  background: #e65100;
+  color: #fff;
+}
+
+.ainote-theme-option .theme-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.12);
+  flex-shrink: 0;
+}
+
+.ainote-theme-option.active .theme-dot {
+  border-color: rgba(255,255,255,0.5);
+}
+
+.theme-dot.orange { background: linear-gradient(135deg, #ff6f00, #ffb300); }
+.theme-dot.dracula { background: #bd93f9; }
+.theme-dot.nord { background: #88c0d0; }
+.theme-dot.gruvbox { background: #d79921; }
+.theme-dot.catppuccin { background: #ea76cb; }
+.theme-dot.tokyonight { background: #7aa2f7; }
+
+/* 暗色主题下的切换器适配 */
+.ainote-theme-dark #ainote-theme-switcher .ainote-theme-btn,
+.ainote-theme-orange #ainote-theme-switcher .ainote-theme-btn {
+  background: rgba(255,255,255,0.92);
+  color: #333;
+  border-color: rgba(0,0,0,0.12);
+}
+
+.ainote-theme-dark .ainote-theme-dropdown {
+  background: #1c2128;
+  border-color: #30363d;
+}
+
+.ainote-theme-dark .ainote-theme-option {
+  color: #c9d1d9;
+}
+
+.ainote-theme-dark .ainote-theme-option:hover {
+  background: #2d333b;
+}

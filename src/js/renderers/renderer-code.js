@@ -25,7 +25,7 @@ registry.register({
       const langMatch = cls.match(/language-(\S+)/);
       if (!langMatch) continue;
       const lang = langMatch[1].toLowerCase();
-      if (!DIAGRAM_LANGS.includes(lang) && !pre.querySelector('.shiki')) {
+      if (!DIAGRAM_LANGS.includes(lang) && !pre.classList.contains('shiki') && !pre.querySelector('.shiki')) {
         return true;
       }
     }
@@ -38,10 +38,20 @@ registry.register({
 
     const preBlocks = container.querySelectorAll('pre');
     const loadedLangs = highlighter.getLoadedLanguages();
+    // 映射 mdTheme → Shiki 主题
+    const SHIKI_THEME_MAP = {
+      dracula: 'dracula',
+      nord: 'nord',
+      gruvbox: 'gruvbox-light',
+      catppuccin: 'catppuccin-latte',
+      tokyonight: 'tokyo-night',
+      dark: 'github-dark',
+    };
+    const shikiTheme = SHIKI_THEME_MAP[ctx.settings.mdTheme] || 'github-light';
 
     for (const pre of preBlocks) {
       // 跳过已高亮或图表代码块
-      if (pre.querySelector('.shiki') || pre.classList.contains('ainote-render-error')) continue;
+      if (pre.classList.contains('shiki') || pre.querySelector('.shiki') || pre.classList.contains('ainote-render-error')) continue;
 
       const code = pre.querySelector('code');
       if (!code) continue;
@@ -55,7 +65,7 @@ registry.register({
 
       if (loadedLangs.includes(lang)) {
         try {
-          const highlighted = highlighter.codeToHtml(code.textContent, { lang, theme: 'github-light' });
+          const highlighted = highlighter.codeToHtml(code.textContent, { lang, theme: shikiTheme });
           const wrapper = document.createElement('div');
           wrapper.className = 'code-block';
           wrapper.innerHTML = highlighted;

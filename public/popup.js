@@ -1,7 +1,7 @@
 // 默认配置
 const DEFAULT_SETTINGS = {
   autoRender: true,
-  theme: 'light',
+  theme: 'orange',
   fontSize: 16,
   lineNumbers: true,
   editorMode: false,

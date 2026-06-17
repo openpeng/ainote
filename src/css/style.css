@@ -512,7 +512,461 @@ body {
   .copy-btn { display: none !important; }
 }
 
-/* ---- 响应式 ---- */
+/* ---- Markdown 内容主题（橙黄醒目标题）---- */
+[data-md-theme="orange"] {
+  --md-h1-color: #bf360c;
+  --md-h2-color: #d84315;
+  --md-h3-color: #e65100;
+  --md-heading-border: #ff8a65;
+  --md-link-color: #e65100;
+  --md-link-hover: #bf360c;
+  --md-code-bg: #fff3e0;
+  --md-code-color: #bf360c;
+  --md-code-border: #ffcc80;
+  --md-blockquote-bg: #fff8e1;
+  --md-blockquote-border: #ffb300;
+  --md-blockquote-color: #6d3b00;
+  --md-table-header-bg: #ff6f00;
+  --md-table-header-text: #ffffff;
+  --md-table-stripe: #fff8e1;
+  --md-table-border: #ffe0b2;
+  --md-hr-color: #ffcc80;
+  --md-strong-color: #d84315;
+  --md-badge-bg: #fff3e0;
+  --md-badge-border: #ffb74d;
+  --md-badge-text: #e65100;
+}
+
+.markdown-body[data-md-theme="orange"] {
+  background: linear-gradient(180deg, #fffdf7 0%, #fffbf2 100%);
+  padding: 20px 24px;
+  border-radius: 8px;
+  border: 1px solid #ffe0b2;
+}
+
+.markdown-body[data-md-theme="orange"] h1 {
+  color: var(--md-h1-color);
+  border-bottom: 3px solid var(--md-heading-border);
+  font-size: 2.2rem;
+}
+
+.markdown-body[data-md-theme="orange"] h2 {
+  color: var(--md-h2-color);
+  border-bottom: 2px solid var(--md-heading-border);
+}
+
+.markdown-body[data-md-theme="orange"] h3 {
+  color: var(--md-h3-color);
+}
+
+.markdown-body[data-md-theme="orange"] h4 {
+  color: #ef6c00;
+}
+
+.markdown-body[data-md-theme="orange"] a {
+  color: var(--md-link-color);
+  font-weight: 500;
+}
+
+.markdown-body[data-md-theme="orange"] a:hover {
+  color: var(--md-link-hover);
+}
+
+.markdown-body[data-md-theme="orange"] strong {
+  color: var(--md-strong-color);
+}
+
+.markdown-body[data-md-theme="orange"] code {
+  background: var(--md-code-bg);
+  color: var(--md-code-color);
+  border: 1px solid var(--md-code-border);
+  font-weight: 500;
+}
+
+.markdown-body[data-md-theme="orange"] pre {
+  background: var(--md-code-bg);
+  border: 1px solid var(--md-code-border);
+}
+.markdown-body[data-md-theme="orange"] pre code {
+  background: transparent;
+  border: none;
+  font-weight: normal;
+}
+
+.markdown-body[data-md-theme="orange"] blockquote {
+  background: var(--md-blockquote-bg);
+  border-left: 5px solid var(--md-blockquote-border);
+  color: var(--md-blockquote-color);
+}
+
+.markdown-body[data-md-theme="orange"] table th {
+  background: var(--md-table-header-bg);
+  color: var(--md-table-header-text);
+}
+
+.markdown-body[data-md-theme="orange"] table td,
+.markdown-body[data-md-theme="orange"] table th {
+  border-color: var(--md-table-border);
+}
+
+.markdown-body[data-md-theme="orange"] tr:nth-child(even) {
+  background: var(--md-table-stripe);
+}
+
+.markdown-body[data-md-theme="orange"] hr {
+  border-top-color: var(--md-hr-color);
+  border-top-width: 2px;
+}
+
+.markdown-body[data-md-theme="orange"] input[type="checkbox"] {
+  accent-color: #ff6f00;
+}
+
+/* 橙黄主题 - Shiki 代码高亮覆盖（Shiki 使用内联样式，需 !important） */
+.markdown-body[data-md-theme="orange"] pre.shiki,
+.markdown-body[data-md-theme="orange"] .code-block pre {
+  background-color: #fffdf7 !important;
+  border: 1px solid #ffcc80 !important;
+}
+.markdown-body[data-md-theme="orange"] .shiki .line {
+  color: #3d2b1f !important;
+}
+/* 确保非 Shiki 代码块也适配 */
+.markdown-body[data-md-theme="orange"] pre:not(.shiki):not(.code-block pre) {
+  background: #fff3e0 !important;
+  border: 1px solid #ffcc80 !important;
+}
+
+/* ---- Markdown 内容主题：清爽浅色 ---- */
+.markdown-body[data-md-theme="light"] {
+  background: #ffffff;
+  padding: 20px 24px;
+  border-radius: 8px;
+  border: 1px solid #d0d7de;
+}
+
+/* ---- Markdown 内容主题：暗色护眼 ---- */
+.markdown-body[data-md-theme="dark"] {
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+.markdown-body[data-md-theme="dark"] h1,
+.markdown-body[data-md-theme="dark"] h2 {
+  color: #f0f6fc;
+  border-bottom-color: #30363d;
+}
+
+.markdown-body[data-md-theme="dark"] h3,
+.markdown-body[data-md-theme="dark"] h4 {
+  color: #e6edf3;
+}
+
+.markdown-body[data-md-theme="dark"] a {
+  color: #58a6ff;
+}
+
+.markdown-body[data-md-theme="dark"] code {
+  background: #161b22;
+  color: #e6edf3;
+}
+
+.markdown-body[data-md-theme="dark"] pre {
+  background: #161b22;
+  border-color: #30363d;
+}
+
+.markdown-body[data-md-theme="dark"] blockquote {
+  background: #161b22;
+  border-left-color: #30363d;
+  color: #8b949e;
+}
+
+.markdown-body[data-md-theme="dark"] table th {
+  background: #21262d;
+}
+
+.markdown-body[data-md-theme="dark"] table td,
+.markdown-body[data-md-theme="dark"] table th {
+  border-color: #30363d;
+}
+
+.markdown-body[data-md-theme="dark"] tr:nth-child(even) {
+  background: #161b22;
+}
+
+.markdown-body[data-md-theme="dark"] hr {
+  border-top-color: #30363d;
+}
+
+/* ============================================================
+   Theme: Dracula — 经典暗紫主题 (draculatheme.com)
+   ============================================================ */
+.markdown-body[data-md-theme="dracula"] {
+  background: #282a36;
+  color: #f8f8f2;
+  border: 1px solid #44475a;
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+.markdown-body[data-md-theme="dracula"] h1,
+.markdown-body[data-md-theme="dracula"] h2,
+.markdown-body[data-md-theme="dracula"] h3,
+.markdown-body[data-md-theme="dracula"] h4 { color: #bd93f9; }
+.markdown-body[data-md-theme="dracula"] h1 { border-bottom: 2px solid #6272a4; }
+.markdown-body[data-md-theme="dracula"] h2 { border-bottom: 1px solid #6272a4; }
+.markdown-body[data-md-theme="dracula"] a { color: #8be9fd; }
+.markdown-body[data-md-theme="dracula"] a:hover { color: #ff79c6; }
+.markdown-body[data-md-theme="dracula"] strong { color: #ffb86c; }
+.markdown-body[data-md-theme="dracula"] code { background: #44475a; color: #f8f8f2; border: 1px solid #6272a4; }
+.markdown-body[data-md-theme="dracula"] pre { background: #44475a; border: 1px solid #6272a4; }
+.markdown-body[data-md-theme="dracula"] pre code { background: transparent; border: none; font-weight: normal; }
+.markdown-body[data-md-theme="dracula"] blockquote { background: #383a59; border-left: 5px solid #bd93f9; color: #f8f8f2; }
+.markdown-body[data-md-theme="dracula"] table th { background: #6272a4; color: #f8f8f2; }
+.markdown-body[data-md-theme="dracula"] table td,
+.markdown-body[data-md-theme="dracula"] table th { border-color: #44475a; }
+.markdown-body[data-md-theme="dracula"] tr:nth-child(even) { background: #2d2f44; }
+.markdown-body[data-md-theme="dracula"] hr { border-top-color: #6272a4; }
+.markdown-body[data-md-theme="dracula"] input[type="checkbox"] { accent-color: #bd93f9; }
+.markdown-body[data-md-theme="dracula"] pre.shiki,
+.markdown-body[data-md-theme="dracula"] .code-block pre { background-color: #44475a !important; border-color: #6272a4 !important; }
+.markdown-body[data-md-theme="dracula"] .shiki .line { color: #f8f8f2 !important; }
+.markdown-body[data-md-theme="dracula"] pre:not(.shiki) { background: #44475a !important; }
+
+/* ============================================================
+   Theme: Nord — 冷淡蓝灰 (nordtheme.com)
+   ============================================================ */
+.markdown-body[data-md-theme="nord"] {
+  background: #2e3440;
+  color: #d8dee9;
+  border: 1px solid #4c566a;
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+.markdown-body[data-md-theme="nord"] h1,
+.markdown-body[data-md-theme="nord"] h2,
+.markdown-body[data-md-theme="nord"] h3,
+.markdown-body[data-md-theme="nord"] h4 { color: #88c0d0; }
+.markdown-body[data-md-theme="nord"] h1 { border-bottom: 2px solid #4c566a; }
+.markdown-body[data-md-theme="nord"] h2 { border-bottom: 1px solid #4c566a; }
+.markdown-body[data-md-theme="nord"] a { color: #81a1c1; }
+.markdown-body[data-md-theme="nord"] a:hover { color: #8fbcbb; }
+.markdown-body[data-md-theme="nord"] strong { color: #ebcb8b; }
+.markdown-body[data-md-theme="nord"] code { background: #3b4252; color: #d8dee9; border: 1px solid #4c566a; }
+.markdown-body[data-md-theme="nord"] pre { background: #3b4252; border: 1px solid #4c566a; }
+.markdown-body[data-md-theme="nord"] pre code { background: transparent; border: none; font-weight: normal; }
+.markdown-body[data-md-theme="nord"] blockquote { background: #3b4252; border-left: 5px solid #5e81ac; color: #d8dee9; }
+.markdown-body[data-md-theme="nord"] table th { background: #4c566a; color: #d8dee9; }
+.markdown-body[data-md-theme="nord"] table td,
+.markdown-body[data-md-theme="nord"] table th { border-color: #3b4252; }
+.markdown-body[data-md-theme="nord"] tr:nth-child(even) { background: #363c4a; }
+.markdown-body[data-md-theme="nord"] hr { border-top-color: #4c566a; }
+.markdown-body[data-md-theme="nord"] input[type="checkbox"] { accent-color: #88c0d0; }
+.markdown-body[data-md-theme="nord"] pre.shiki,
+.markdown-body[data-md-theme="nord"] .code-block pre { background-color: #3b4252 !important; border-color: #4c566a !important; }
+.markdown-body[data-md-theme="nord"] .shiki .line { color: #d8dee9 !important; }
+.markdown-body[data-md-theme="nord"] pre:not(.shiki) { background: #3b4252 !important; }
+
+/* ============================================================
+   Theme: Gruvbox Light — 复古暖光 (github.com/morhetz/gruvbox)
+   ============================================================ */
+.markdown-body[data-md-theme="gruvbox"] {
+  background: #fbf1c7;
+  color: #3c3836;
+  border: 1px solid #d5c4a1;
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+.markdown-body[data-md-theme="gruvbox"] h1,
+.markdown-body[data-md-theme="gruvbox"] h2 { color: #b16286; }
+.markdown-body[data-md-theme="gruvbox"] h3,
+.markdown-body[data-md-theme="gruvbox"] h4 { color: #8f3f71; }
+.markdown-body[data-md-theme="gruvbox"] h1 { border-bottom: 3px solid #d79921; }
+.markdown-body[data-md-theme="gruvbox"] h2 { border-bottom: 2px solid #d5c4a1; }
+.markdown-body[data-md-theme="gruvbox"] a { color: #076678; }
+.markdown-body[data-md-theme="gruvbox"] a:hover { color: #458588; }
+.markdown-body[data-md-theme="gruvbox"] strong { color: #cc241d; }
+.markdown-body[data-md-theme="gruvbox"] code { background: #ebdbb2; color: #3c3836; border: 1px solid #d5c4a1; }
+.markdown-body[data-md-theme="gruvbox"] pre { background: #ebdbb2; border: 1px solid #d5c4a1; }
+.markdown-body[data-md-theme="gruvbox"] pre code { background: transparent; border: none; font-weight: normal; }
+.markdown-body[data-md-theme="gruvbox"] blockquote { background: #f2e5bc; border-left: 5px solid #d79921; color: #3c3836; }
+.markdown-body[data-md-theme="gruvbox"] table th { background: #d5c4a1; color: #3c3836; }
+.markdown-body[data-md-theme="gruvbox"] table td,
+.markdown-body[data-md-theme="gruvbox"] table th { border-color: #bdae93; }
+.markdown-body[data-md-theme="gruvbox"] tr:nth-child(even) { background: #f2e5bc; }
+.markdown-body[data-md-theme="gruvbox"] hr { border-top-color: #d5c4a1; }
+.markdown-body[data-md-theme="gruvbox"] input[type="checkbox"] { accent-color: #d79921; }
+.markdown-body[data-md-theme="gruvbox"] pre.shiki,
+.markdown-body[data-md-theme="gruvbox"] .code-block pre { background-color: #ebdbb2 !important; border-color: #d5c4a1 !important; }
+.markdown-body[data-md-theme="gruvbox"] .shiki .line { color: #3c3836 !important; }
+.markdown-body[data-md-theme="gruvbox"] pre:not(.shiki) { background: #ebdbb2 !important; }
+
+/* ============================================================
+   Theme: Catppuccin Latte — 柔和粉彩 (catppuccin.com)
+   ============================================================ */
+.markdown-body[data-md-theme="catppuccin"] {
+  background: #eff1f5;
+  color: #4c4f69;
+  border: 1px solid #ccd0da;
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+.markdown-body[data-md-theme="catppuccin"] h1,
+.markdown-body[data-md-theme="catppuccin"] h2 { color: #8839ef; }
+.markdown-body[data-md-theme="catppuccin"] h3,
+.markdown-body[data-md-theme="catppuccin"] h4 { color: #9b59b6; }
+.markdown-body[data-md-theme="catppuccin"] h1 { border-bottom: 2px solid #fe640b; }
+.markdown-body[data-md-theme="catppuccin"] h2 { border-bottom: 1px solid #ccd0da; }
+.markdown-body[data-md-theme="catppuccin"] a { color: #1e66f5; }
+.markdown-body[data-md-theme="catppuccin"] a:hover { color: #ea76cb; }
+.markdown-body[data-md-theme="catppuccin"] strong { color: #d20f39; }
+.markdown-body[data-md-theme="catppuccin"] code { background: #e6e9ef; color: #4c4f69; border: 1px solid #ccd0da; }
+.markdown-body[data-md-theme="catppuccin"] pre { background: #e6e9ef; border: 1px solid #ccd0da; }
+.markdown-body[data-md-theme="catppuccin"] pre code { background: transparent; border: none; font-weight: normal; }
+.markdown-body[data-md-theme="catppuccin"] blockquote { background: #e6e9ef; border-left: 5px solid #fe640b; color: #5c5f77; }
+.markdown-body[data-md-theme="catppuccin"] table th { background: #ccd0da; color: #4c4f69; }
+.markdown-body[data-md-theme="catppuccin"] table td,
+.markdown-body[data-md-theme="catppuccin"] table th { border-color: #bcc0cc; }
+.markdown-body[data-md-theme="catppuccin"] tr:nth-child(even) { background: #e6e9ef; }
+.markdown-body[data-md-theme="catppuccin"] hr { border-top-color: #ccd0da; }
+.markdown-body[data-md-theme="catppuccin"] input[type="checkbox"] { accent-color: #fe640b; }
+.markdown-body[data-md-theme="catppuccin"] pre.shiki,
+.markdown-body[data-md-theme="catppuccin"] .code-block pre { background-color: #e6e9ef !important; border-color: #ccd0da !important; }
+.markdown-body[data-md-theme="catppuccin"] .shiki .line { color: #4c4f69 !important; }
+.markdown-body[data-md-theme="catppuccin"] pre:not(.shiki) { background: #e6e9ef !important; }
+
+/* ============================================================
+   Theme: Tokyo Night — 东京暗夜 (github.com/tokyo-night)
+   ============================================================ */
+.markdown-body[data-md-theme="tokyonight"] {
+  background: #1a1b26;
+  color: #c0caf5;
+  border: 1px solid #364a82;
+  border-radius: 8px;
+  padding: 20px 24px;
+}
+.markdown-body[data-md-theme="tokyonight"] h1,
+.markdown-body[data-md-theme="tokyonight"] h2,
+.markdown-body[data-md-theme="tokyonight"] h3,
+.markdown-body[data-md-theme="tokyonight"] h4 { color: #bb9af7; }
+.markdown-body[data-md-theme="tokyonight"] h1 { border-bottom: 2px solid #364a82; }
+.markdown-body[data-md-theme="tokyonight"] h2 { border-bottom: 1px solid #364a82; }
+.markdown-body[data-md-theme="tokyonight"] a { color: #7aa2f7; }
+.markdown-body[data-md-theme="tokyonight"] a:hover { color: #7dcfff; }
+.markdown-body[data-md-theme="tokyonight"] strong { color: #ff9e64; }
+.markdown-body[data-md-theme="tokyonight"] code { background: #24283b; color: #c0caf5; border: 1px solid #364a82; }
+.markdown-body[data-md-theme="tokyonight"] pre { background: #24283b; border: 1px solid #364a82; }
+.markdown-body[data-md-theme="tokyonight"] pre code { background: transparent; border: none; font-weight: normal; }
+.markdown-body[data-md-theme="tokyonight"] blockquote { background: #1f2335; border-left: 5px solid #7aa2f7; color: #c0caf5; }
+.markdown-body[data-md-theme="tokyonight"] table th { background: #364a82; color: #c0caf5; }
+.markdown-body[data-md-theme="tokyonight"] table td,
+.markdown-body[data-md-theme="tokyonight"] table th { border-color: #24283b; }
+.markdown-body[data-md-theme="tokyonight"] tr:nth-child(even) { background: #1f2335; }
+.markdown-body[data-md-theme="tokyonight"] hr { border-top-color: #364a82; }
+.markdown-body[data-md-theme="tokyonight"] input[type="checkbox"] { accent-color: #bb9af7; }
+.markdown-body[data-md-theme="tokyonight"] pre.shiki,
+.markdown-body[data-md-theme="tokyonight"] .code-block pre { background-color: #24283b !important; border-color: #364a82 !important; }
+.markdown-body[data-md-theme="tokyonight"] .shiki .line { color: #c0caf5 !important; }
+.markdown-body[data-md-theme="tokyonight"] pre:not(.shiki) { background: #24283b !important; }
+
+/* ---- MD 主题切换器 ---- */
+.md-theme-switcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  z-index: 10;
+}
+
+.md-theme-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text);
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.md-theme-switcher-btn:hover {
+  background: var(--border);
+}
+
+.md-theme-switcher-btn .current-label {
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-theme-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  min-width: 140px;
+  overflow: hidden;
+  display: none;
+  z-index: 20;
+}
+
+.md-theme-dropdown.open {
+  display: block;
+}
+
+.md-theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.md-theme-option:hover {
+  background: var(--bg-sidebar);
+}
+
+.md-theme-option.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.md-theme-option .theme-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+
+.md-theme-option.active .theme-dot {
+  border-color: rgba(255,255,255,0.4);
+}
+
+.theme-dot.orange { background: linear-gradient(135deg, #ff6f00, #ffb300); }
+.theme-dot.orange { background: linear-gradient(135deg, #ff6f00, #ffb300); }
+.theme-dot.dracula { background: #bd93f9; }
+.theme-dot.nord { background: #88c0d0; }
+.theme-dot.gruvbox { background: #d79921; }
+.theme-dot.catppuccin { background: #ea76cb; }
+.theme-dot.tokyonight { background: #7aa2f7; }
+
 @media (max-width: 768px) {
   #app {
     flex-direction: column;

@@ -32,3 +32,8 @@ yarn-error.log*
 
 # ===== WorkBuddy =====
 .workbuddy/
+
+# ===== Extension Build Artifacts =====
+*.crx
+*.pem
+public.zip

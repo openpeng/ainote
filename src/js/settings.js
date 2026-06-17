@@ -8,6 +8,7 @@ const SETTINGS_KEY = 'ainote-settings';
 const DEFAULTS = {
   autoRender: true,
   theme: 'light',
+  mdTheme: 'orange',
   fontSize: 16,
   lineNumbers: true,
   editorMode: false,

@@ -33,7 +33,7 @@
   let currentMarkdownText = ''; // 保存当前 Markdown 文本（用于编辑器模式）
   let settings = {
     autoRender: true,
-    theme: 'light',
+    theme: 'orange',
     fontSize: 16,
     lineNumbers: true,
     editorMode: false,
@@ -76,7 +76,7 @@
   if (typeof chrome !== 'undefined' && chrome.storage) {
     chrome.storage.sync.get({
       autoRender: true,
-      theme: 'light',
+      theme: 'orange',
       fontSize: 16,
       lineNumbers: true,
       editorMode: false
@@ -539,6 +539,7 @@
       container.id = 'ainote-rendered';
       container.className = `ainote-theme-${theme}`;
       container.style.cssText = `
+        position: relative;
         max-width: 900px;
         margin: 0 auto;
         padding: 32px;
@@ -549,6 +550,9 @@
 
       document.body.innerHTML = '';
       document.body.appendChild(container);
+
+      // 添加主题切换器（渲染后的右上角）
+      createThemeSwitcher(container);
 
       // ===== 关键变更：使用管道执行所有渲染器 =====
       // 替代原来逐个调用 renderMermaidBlocks / renderPlantUMLBlocks / ...
@@ -583,6 +587,85 @@
     }
   }
 
+  // ========== 浮动主题切换器 ==========
+  const THEME_OPTIONS = [
+    { id: 'orange', label: '橙黄醒目', icon: '🔥', dotClass: 'orange' },
+    { id: 'dracula', label: 'Dracula', icon: '🧛', dotClass: 'dracula' },
+    { id: 'nord', label: 'Nord', icon: '❄️', dotClass: 'nord' },
+    { id: 'gruvbox', label: 'Gruvbox', icon: '📜', dotClass: 'gruvbox' },
+    { id: 'catppuccin', label: 'Catppuccin', icon: '🐱', dotClass: 'catppuccin' },
+    { id: 'tokyonight', label: 'Tokyo Night', icon: '🌃', dotClass: 'tokyonight' },
+  ];
+
+  function createThemeSwitcher(container) {
+    // 避免重复创建
+    var existing = document.getElementById('ainote-theme-switcher');
+    if (existing) existing.remove();
+
+    var currentTheme = settings.theme || 'orange';
+    var info = THEME_OPTIONS.find(function(t) { return t.id === currentTheme; }) || THEME_OPTIONS[0];
+
+    var wrapper = document.createElement('div');
+    wrapper.id = 'ainote-theme-switcher';
+    wrapper.innerHTML = '' +
+      '<button class="ainote-theme-btn" title="切换 Markdown 样式主题">' +
+        '<span class="theme-current-icon">' + info.icon + '</span>' +
+        '<span class="theme-current-label">' + info.label + '</span>' +
+      '</button>' +
+      '<div class="ainote-theme-dropdown">' +
+        THEME_OPTIONS.map(function(t) {
+          return '<button class="ainote-theme-option' + (t.id === currentTheme ? ' active' : '') + '" data-theme="' + t.id + '">' +
+            '<span class="theme-dot ' + t.dotClass + '"></span>' +
+            t.icon + ' ' + t.label +
+          '</button>';
+        }).join('') +
+      '</div>';
+
+    // 按钮点击切换下拉菜单
+    var btn = wrapper.querySelector('.ainote-theme-btn');
+    var dropdown = wrapper.querySelector('.ainote-theme-dropdown');
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+
+    // 选项点击
+    var options = wrapper.querySelectorAll('.ainote-theme-option');
+    for (var i = 0; i < options.length; i++) {
+      options[i].addEventListener('click', function() {
+        var theme = this.getAttribute('data-theme');
+        settings.theme = theme;
+        // 保存到 storage
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+          chrome.storage.sync.set({ theme: theme });
+        }
+        applySettings();
+        dropdown.classList.remove('open');
+        // 更新切换器按钮
+        updateThemeSwitcherLabel(theme);
+      });
+    }
+
+    // 点击外部关闭
+    document.addEventListener('click', function() {
+      dropdown.classList.remove('open');
+    });
+
+    container.appendChild(wrapper);
+  }
+
+  function updateThemeSwitcherLabel(theme) {
+    var info = THEME_OPTIONS.find(function(t) { return t.id === theme; }) || THEME_OPTIONS[0];
+    var iconEl = document.querySelector('#ainote-theme-switcher .theme-current-icon');
+    var labelEl = document.querySelector('#ainote-theme-switcher .theme-current-label');
+    if (iconEl) iconEl.textContent = info.icon;
+    if (labelEl) labelEl.textContent = info.label;
+    var opts = document.querySelectorAll('#ainote-theme-switcher .ainote-theme-option');
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].classList.toggle('active', opts[i].getAttribute('data-theme') === theme);
+    }
+  }
+
   // ========== 应用设置 ==========
   function applySettings() {
     const container = document.getElementById('ainote-rendered');
@@ -594,6 +677,9 @@
 
     container.className = `ainote-theme-${theme}`;
     container.style.fontSize = settings.fontSize + 'px';
+
+    // 同步主题切换器
+    updateThemeSwitcherLabel(theme);
 
     // 重新渲染代码高亮（主题切换时）-- 通过管道重新运行 hljs 渲染器
     if (isRendered) {

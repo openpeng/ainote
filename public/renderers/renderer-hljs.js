@@ -43,7 +43,8 @@
     },
 
     render: async function(container, ctx) {
-      var themeName = ctx.settings.theme === 'dark' ? 'github-dark' : 'github';
+      var darkThemes = ['dark', 'dracula', 'nord', 'tokyonight'];
+      var themeName = darkThemes.indexOf(ctx.settings.theme) !== -1 ? 'github-dark' : 'github';
       await loadHighlightTheme(ctx, themeName);
 
       if (typeof hljs === 'undefined') return;

@@ -77,7 +77,7 @@ function createRenderContext() {
 async function initShiki() {
   try {
     shikiHighlighter = await createHighlighter({
-      themes: ['github-light', 'github-dark'],
+      themes: ['github-light', 'github-dark', 'dracula', 'nord', 'gruvbox-light', 'catppuccin-latte', 'tokyo-night'],
       langs: [
         'javascript', 'typescript', 'python', 'java', 'c', 'cpp',
         'go', 'rust', 'html', 'css', 'json', 'yaml', 'markdown',
@@ -150,6 +150,10 @@ async function renderContent(text, fileName = '') {
 
   // 代码块添加复制按钮
   addCopyButtons();
+
+  // 恢复 MD 主题属性（innerHTML 替换会丢失）
+  const mdTheme = settings.get('mdTheme') || 'orange';
+  container.setAttribute('data-md-theme', mdTheme);
 
   // 生成目录
   generateTOC();
@@ -291,6 +295,96 @@ function toggleTheme() {
   applyTheme(next);
 }
 
+// ========== Markdown 内容主题 ==========
+const MD_THEMES = [
+  { id: 'orange', label: '橙黄醒目', icon: '🔥', dotClass: 'orange' },
+  { id: 'dracula', label: 'Dracula', icon: '🧛', dotClass: 'dracula' },
+  { id: 'nord', label: 'Nord', icon: '❄️', dotClass: 'nord' },
+  { id: 'gruvbox', label: 'Gruvbox', icon: '📜', dotClass: 'gruvbox' },
+  { id: 'catppuccin', label: 'Catppuccin', icon: '🐱', dotClass: 'catppuccin' },
+  { id: 'tokyonight', label: 'Tokyo Night', icon: '🌃', dotClass: 'tokyonight' },
+];
+
+function applyMdTheme(theme) {
+  const container = document.getElementById('markdown-body');
+  if (container) {
+    container.setAttribute('data-md-theme', theme);
+  }
+  // 更新切换器按钮文字
+  updateMdSwitcherLabel(theme);
+}
+
+function updateMdSwitcherLabel(theme) {
+  const themeInfo = MD_THEMES.find(t => t.id === theme) || MD_THEMES[0];
+  const label = document.querySelector('.md-theme-switcher-btn .current-label');
+  if (label) {
+    label.textContent = themeInfo.label;
+  }
+  const icon = document.querySelector('.md-theme-switcher-btn .current-icon');
+  if (icon) {
+    icon.textContent = themeInfo.icon;
+  }
+  // 高亮当前选项
+  document.querySelectorAll('.md-theme-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.theme === theme);
+  });
+}
+
+function createMdThemeSwitcher() {
+  const toolbar = document.getElementById('ainote-toolbar-actions');
+  if (!toolbar || document.querySelector('.md-theme-switcher')) return;
+
+  const currentTheme = settings.get('mdTheme') || 'orange';
+  const themeInfo = MD_THEMES.find(t => t.id === currentTheme) || MD_THEMES[0];
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'md-theme-switcher';
+  wrapper.innerHTML = `
+    <button class="md-theme-switcher-btn" title="切换 Markdown 内容样式">
+      <span class="current-icon">${themeInfo.icon}</span>
+      <span class="current-label">${themeInfo.label}</span>
+    </button>
+    <div class="md-theme-dropdown">
+      ${MD_THEMES.map(t => `
+        <button class="md-theme-option${t.id === currentTheme ? ' active' : ''}" data-theme="${t.id}">
+          <span class="theme-dot ${t.dotClass}"></span>
+          ${t.icon} ${t.label}
+        </button>
+      `).join('')}
+    </div>
+  `;
+
+  // 按钮点击切换下拉菜单
+  const btn = wrapper.querySelector('.md-theme-switcher-btn');
+  const dropdown = wrapper.querySelector('.md-theme-dropdown');
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+
+  // 选项点击
+  wrapper.querySelectorAll('.md-theme-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const theme = opt.dataset.theme;
+      settings.set('mdTheme', theme);
+      applyMdTheme(theme);
+      dropdown.classList.remove('open');
+    });
+  });
+
+  // 点击外部关闭下拉菜单
+  document.addEventListener('click', () => {
+    dropdown.classList.remove('open');
+  });
+
+  toolbar.appendChild(wrapper);
+}
+
+function setMdTheme(theme) {
+  settings.set('mdTheme', theme);
+  applyMdTheme(theme);
+}
+
 // ========== 文件读取 ==========
 function handleFile(file) {
   const reader = new FileReader();
@@ -391,10 +485,17 @@ async function init() {
   const savedTheme = settings.get('theme') || 'light';
   applyTheme(savedTheme);
 
+  // 4.1 恢复 MD 内容主题
+  const savedMdTheme = settings.get('mdTheme') || 'orange';
+  applyMdTheme(savedMdTheme);
+
   // 5. 监听设置变更
   settings.onChange((change) => {
     if (change.key === 'theme' || 'theme' in change) {
       applyTheme(settings.get('theme'));
+    }
+    if (change.key === 'mdTheme' || 'mdTheme' in change) {
+      applyMdTheme(settings.get('mdTheme') || 'orange');
     }
   });
 
@@ -410,6 +511,9 @@ async function init() {
     shikiHighlighter,
     createContext: createRenderContext,
   });
+
+  // 6.1 创建 MD 主题切换器（在工具栏按钮之后，靠右显示）
+  createMdThemeSwitcher();
 
   // 7. 绑定事件
   document.getElementById('fileInput').addEventListener('change', (e) => {
