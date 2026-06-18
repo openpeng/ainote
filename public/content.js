@@ -562,6 +562,9 @@
       // 补充 SVG 修复
       fixSvgDisplay(container);
 
+      // 图表缩放（Mermaid/PlantUML 等点击放大）
+      initDiagramZoom(container);
+
       isRendered = true;
       updateToolbarState();
 
@@ -663,6 +666,193 @@
     var opts = document.querySelectorAll('#ainote-theme-switcher .ainote-theme-option');
     for (var i = 0; i < opts.length; i++) {
       opts[i].classList.toggle('active', opts[i].getAttribute('data-theme') === theme);
+    }
+  }
+
+  // ========== 图表缩放/拖拽弹窗 ==========
+  var zoomOverlay = null;
+  var zoomStage = null;
+  var zoomSvg = null;
+  var zoomScale = 1;
+  var zoomTx = 0;
+  var zoomTy = 0;
+  var zoomDragging = false;
+  var zoomStartX = 0;
+  var zoomStartY = 0;
+  var zoomStartTx = 0;
+  var zoomStartTy = 0;
+  var ZOOM_MIN = 0.3;
+  var ZOOM_MAX = 5;
+  var ZOOM_STEP = 0.15;
+
+  function createZoomOverlay() {
+    if (zoomOverlay) return;
+
+    zoomOverlay = document.createElement('div');
+    zoomOverlay.className = 'ainote-zoom-overlay';
+    zoomOverlay.innerHTML = '' +
+      '<button class="ainote-zoom-close" title="\u5173\u95ed (Esc)">&times;</button>' +
+      '<div class="ainote-zoom-toolbar">' +
+        '<button class="ainote-zoom-btn" data-action="in" title="\u653E\u5927">\uff0b</button>' +
+        '<span class="ainote-zoom-level">100%</span>' +
+        '<button class="ainote-zoom-btn" data-action="out" title="\u7F29\u5C0F">\uff0d</button>' +
+        '<button class="ainote-zoom-btn" data-action="reset" title="\u91CD\u7F6E">\u21BA</button>' +
+        '<button class="ainote-zoom-btn" data-action="fit" title="\u9002\u5408\u7A97\u53E3">\u22A1</button>' +
+      '</div>' +
+      '<div class="ainote-zoom-stage"></div>';
+
+    zoomStage = zoomOverlay.querySelector('.ainote-zoom-stage');
+    var levelEl = zoomOverlay.querySelector('.ainote-zoom-level');
+
+    function closeZoom() {
+      if (!zoomOverlay) return;
+      document.removeEventListener('keydown', onZoomKey);
+      zoomOverlay.remove();
+      zoomOverlay = null; zoomStage = null; zoomSvg = null;
+      zoomScale = 1; zoomTx = 0; zoomTy = 0; zoomDragging = false;
+    }
+
+    zoomOverlay.querySelector('.ainote-zoom-close').addEventListener('click', closeZoom);
+    zoomOverlay.addEventListener('click', function(e) {
+      if (e.target === zoomOverlay) closeZoom();
+    });
+
+    // 工具栏
+    var btns = zoomOverlay.querySelectorAll('.ainote-zoom-btn');
+    for (var b = 0; b < btns.length; b++) {
+      btns[b].addEventListener('click', function(e) {
+        e.stopPropagation();
+        switch (this.dataset.action) {
+          case 'in': applyZoom(zoomScale + ZOOM_STEP); break;
+          case 'out': applyZoom(zoomScale - ZOOM_STEP); break;
+          case 'reset': resetZoom(); break;
+          case 'fit': fitZoom(); break;
+        }
+      });
+    }
+
+    // 滚轮缩放
+    zoomStage.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+      applyZoom(zoomScale + delta);
+    }, { passive: false });
+
+    // 拖拽
+    zoomStage.addEventListener('mousedown', function(e) {
+      if (e.button !== 0) return;
+      zoomDragging = true;
+      zoomStartX = e.clientX;
+      zoomStartY = e.clientY;
+      zoomStartTx = zoomTx;
+      zoomStartTy = zoomTy;
+      zoomStage.classList.add('dragging');
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function(e) {
+      if (!zoomDragging) return;
+      zoomTx = zoomStartTx + (e.clientX - zoomStartX);
+      zoomTy = zoomStartTy + (e.clientY - zoomStartY);
+      updateZoomTransform();
+    });
+
+    window.addEventListener('mouseup', function() {
+      if (zoomDragging) {
+        zoomDragging = false;
+        if (zoomStage) zoomStage.classList.remove('dragging');
+      }
+    });
+
+    function onZoomKey(e) {
+      if (e.key === 'Escape') { closeZoom(); return; }
+      if (e.key === '+' || e.key === '=') { applyZoom(zoomScale + ZOOM_STEP); return; }
+      if (e.key === '-') { applyZoom(zoomScale - ZOOM_STEP); return; }
+      if (e.key === '0') { resetZoom(); return; }
+    }
+    document.addEventListener('keydown', onZoomKey);
+
+    function applyZoom(s) {
+      zoomScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, s));
+      if (levelEl) levelEl.textContent = Math.round(zoomScale * 100) + '%';
+      updateZoomTransform();
+    }
+
+    function updateZoomTransform() {
+      if (!zoomSvg) return;
+      zoomSvg.style.transform = 'translate(' + zoomTx + 'px, ' + zoomTy + 'px) scale(' + zoomScale + ')';
+    }
+
+    function resetZoom() {
+      zoomScale = 1; zoomTx = 0; zoomTy = 0;
+      if (levelEl) levelEl.textContent = '100%';
+      updateZoomTransform();
+    }
+
+    function fitZoom() {
+      if (!zoomSvg || !zoomStage) return;
+      var sw = zoomStage.clientWidth;
+      var sh = zoomStage.clientHeight;
+      var vw = zoomSvg.getAttribute('width');
+      var vh = zoomSvg.getAttribute('height');
+      if (vw && vh) { vw = parseFloat(vw); vh = parseFloat(vh); }
+      else {
+        var bb = zoomSvg.getBBox ? zoomSvg.getBBox() : null;
+        if (bb) { vw = bb.width; vh = bb.height; }
+        else { vw = 800; vh = 600; }
+      }
+      var p = 60;
+      var sx = (sw - p * 2) / vw;
+      var sy = (sh - p * 2) / vh;
+      zoomScale = Math.min(sx, sy, 2);
+      zoomTx = 0; zoomTy = 0;
+      if (levelEl) levelEl.textContent = Math.round(zoomScale * 100) + '%';
+      updateZoomTransform();
+    }
+
+    document.body.appendChild(zoomOverlay);
+  }
+
+  function showZoomDiagram(svgContent) {
+    createZoomOverlay();
+    if (!zoomStage) return;
+    zoomStage.innerHTML = svgContent;
+    zoomSvg = zoomStage.querySelector('svg');
+    if (zoomSvg) {
+      zoomSvg.style.transformOrigin = 'center center';
+      zoomSvg.style.transition = 'transform 0.1s ease-out';
+      setTimeout(function() { fitZoom(); }, 100);
+    } else {
+      // 可能是 img 标签（PlantUML 渲染为图片）
+      var img = zoomStage.querySelector('img');
+      if (img) {
+        zoomSvg = img;
+        zoomSvg.style.transformOrigin = 'center center';
+        zoomSvg.style.transition = 'transform 0.1s ease-out';
+        setTimeout(function() { fitZoom(); }, 100);
+      }
+    }
+  }
+
+  function initDiagramZoom(container) {
+    var selectors = '.mermaid-chart, .mermaid-svg, .plantuml-chart, .graphviz-chart, .d2-chart';
+    var diagrams = container.querySelectorAll(selectors);
+    for (var i = 0; i < diagrams.length; i++) {
+      var d = diagrams[i];
+      if (d.dataset.zoomBound === '1') continue;
+      d.dataset.zoomBound = '1';
+      d.style.cursor = 'zoom-in';
+      d.title = '\u70B9\u51FB\u653E\u5927\u67E5\u770B';
+      d.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var svg = this.querySelector('svg');
+        var img = this.querySelector('img');
+        if (svg) {
+          showZoomDiagram(svg.outerHTML);
+        } else if (img) {
+          showZoomDiagram('<img src="' + img.src + '" style="max-width:100%;height:auto;" />');
+        }
+      });
     }
   }
 

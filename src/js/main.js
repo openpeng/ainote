@@ -9,6 +9,9 @@ import registry from './renderers/renderer-registry.js';
 import pipeline from './renderers/render-pipeline.js';
 import { initToolbar } from './components/toolbar.js';
 import { initSettingsPanel, toggleSettingsPanel } from './components/settings-panel.js';
+import { initDiagramZoom } from './components/diagram-zoom.js';
+import { exportToPDF } from './components/pdf-export.js';
+import { toggleEditorMode } from './components/editor-mode.js';
 
 // 导入所有渲染器（触发注册）
 import './renderers/renderer-mermaid.js';
@@ -150,6 +153,9 @@ async function renderContent(text, fileName = '') {
 
   // 代码块添加复制按钮
   addCopyButtons();
+
+  // 图表缩放（Mermaid/PlantUML/Graphviz 等点击放大）
+  initDiagramZoom(container);
 
   // 恢复 MD 主题属性（innerHTML 替换会丢失）
   const mdTheme = settings.get('mdTheme') || 'orange';
